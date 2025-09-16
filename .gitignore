@@ -2,4 +2,5 @@
 /*/.mvn
 /*/mvnw
 /*/mvnw.cmd
+/**/database.properties
 /ms-front/package-lock.json
