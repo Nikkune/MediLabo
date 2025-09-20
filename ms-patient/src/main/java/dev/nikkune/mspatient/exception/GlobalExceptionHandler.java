@@ -1,8 +1,10 @@
 package dev.nikkune.mspatient.exception;
 
+import dev.nikkune.mspatient.config.SecurityConfig;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -23,6 +25,7 @@ import java.util.Map;
  * desired HTTP response statuses and error messages.
  */
 @ControllerAdvice
+@Import(SecurityConfig.class)
 public class GlobalExceptionHandler {
     private static final Logger logger = LogManager.getLogger(GlobalExceptionHandler.class);
 
