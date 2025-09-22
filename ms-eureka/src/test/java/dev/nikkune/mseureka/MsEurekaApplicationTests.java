@@ -1,11 +1,10 @@
-package dev.nikkune.mspatient;
+package dev.nikkune.mseureka;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 @SpringBootTest
-class MsPatientApplicationTests {
+class MsEurekaApplicationTests {
 
     @Test
     void contextLoads() {

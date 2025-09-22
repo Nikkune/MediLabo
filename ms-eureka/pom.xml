@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>dev.nikkune</groupId>
-    <artifactId>ms-gateway</artifactId>
+    <artifactId>ms-eureka</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ms-gateway</name>
-    <description>ms-gateway</description>
+    <name>ms-eureka</name>
+    <description>ms-eureka</description>
     <url/>
     <licenses>
         <license/>
@@ -28,28 +28,13 @@
     </scm>
     <properties>
         <java.version>21</java.version>
-        <jacoco.version>0.8.13</jacoco.version>
-        <junit.version>4.13.2</junit.version>
-        <mockito.version>5.19.0</mockito.version>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
     <dependencies>
-        <!-- Spring Gateway -->
+        <!-- Spring Eureka Server -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
-        </dependency>
-
-        <!-- Spring Security -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-
-        <!-- Spring Eureka Client -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
         </dependency>
 
         <!-- Spring Test -->

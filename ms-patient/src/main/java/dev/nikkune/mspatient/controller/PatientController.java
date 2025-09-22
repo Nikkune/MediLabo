@@ -22,7 +22,7 @@ import java.util.List;
  * PatientService to handle all business logic and database interactions.
  */
 @RestController
-@RequestMapping("/patient")
+@RequestMapping
 public class PatientController {
     private static final Logger logger = LogManager.getLogger(PatientController.class);
     private final IPatientService patientService;
