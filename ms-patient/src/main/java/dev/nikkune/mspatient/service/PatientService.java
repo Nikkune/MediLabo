@@ -33,7 +33,8 @@ public class PatientService implements IPatientService {
     @Override
     public List<PatientDTO> findAll() {
         List<Patient> patients = patientRepository.findAll();
-        return patients.stream().map(mapper::toDTO).toList();
+        List<Patient> activePatients = patients.stream().filter(Patient::getActive).toList();
+        return activePatients.stream().map(mapper::toDTO).toList();
     }
 
     /**
@@ -92,15 +93,16 @@ public class PatientService implements IPatientService {
      * a RuntimeException is thrown.
      *
      * @param patientDTO the data transfer object containing the new patient details
-     * @param id         the unique identifier of the patient to be updated
      * @return the updated {@link Patient} entity after saving to the repository
      * @throws RuntimeException if no patient is found with the given ID
      */
     @Override
-    public PatientDTO update(PatientDTO patientDTO, Integer id) {
-        Patient patient = patientRepository.findById(id).orElse(null);
+    public PatientDTO update(PatientDTO patientDTO) {
+        String firstName = patientDTO.getFirstName();
+        String lastName = patientDTO.getLastName();
+        Patient patient = patientRepository.findByFirstNameAndLastName(firstName, lastName);
         if (patient == null || patient.getActive() == false)
-            throw new RuntimeException("Patient with ID " + id + " does not exist");
+            throw new RuntimeException("Patient with first name " + firstName + " and last name " + lastName + " does not exist");
 
         mapper.updatePatient(patientDTO, patient);
 
@@ -112,13 +114,14 @@ public class PatientService implements IPatientService {
     /**
      * Deletes a patient entity from the repository by its unique identifier.
      *
-     * @param id the unique identifier of the patient to be deleted
+     * @param firstName the first name of the patient
+     * @param lastName  the last name of the patient
      */
     @Override
-    public void delete(Integer id) {
-        Patient patient = patientRepository.findById(id).orElse(null);
+    public void delete(String firstName, String lastName) {
+        Patient patient = patientRepository.findByFirstNameAndLastName(firstName, lastName);
         if (patient == null || patient.getActive() == false)
-            throw new RuntimeException("Patient with ID " + id + " does not exist");
+            throw new RuntimeException("Patient with first name " + firstName + " and last name " + lastName + " does not exist");
 
         patient.setActive(false);
 

@@ -37,11 +37,11 @@ import java.util.Date;
  */
 @Data
 public class PatientDTO {
-    @NotBlank(message = "Last name must be provided", groups = ValidationGroups.Create.class)
+    @NotBlank(message = "Last name must be provided")
     @Size(min = 3, max = 100)
     private String lastName;
 
-    @NotBlank(message = "First name must be provided", groups = ValidationGroups.Create.class)
+    @NotBlank(message = "First name must be provided")
     @Size(min = 3, max = 100)
     private String firstName;
 

@@ -99,9 +99,9 @@ public class PatientController {
      * @return a ResponseEntity containing the updated Patient object
      */
     @PutMapping
-    public PatientDTO updatePatient(@RequestParam @Valid Integer id, @RequestBody @Validated(ValidationGroups.Update.class) PatientDTO patient) {
+    public PatientDTO updatePatient(@RequestBody @Validated(ValidationGroups.Update.class) PatientDTO patient) {
         logger.debug("Received request to update patient {}", patient);
-        PatientDTO updatedPatient = patientService.update(patient, id);
+        PatientDTO updatedPatient = patientService.update(patient);
         logger.info("Updated patient {}", updatedPatient);
         return updatedPatient;
     }
@@ -116,10 +116,10 @@ public class PatientController {
      * @return a ResponseEntity with no content, indicating successful deletion
      */
     @DeleteMapping
-    public ResponseEntity<Void> deletePatient(@RequestParam @Valid Integer id) {
-        logger.debug("Received request to delete patient with ID {}", id);
-        patientService.delete(id);
-        logger.info("Deleted patient with ID {}", id);
+    public ResponseEntity<Void> deletePatient(@RequestParam @Valid String firstName, @RequestParam @Valid String lastName) {
+        logger.debug("Received request to delete patient with first name {} and last name {}", firstName, lastName);
+        patientService.delete(firstName, lastName);
+        logger.info("Deleted patient with first name {} and last name {}", firstName, lastName);
         return ResponseEntity.ok().build();
     }
 }

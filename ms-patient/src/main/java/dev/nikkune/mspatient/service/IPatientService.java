@@ -13,7 +13,7 @@ public interface IPatientService {
 
     PatientDTO registerPatient(PatientDTO patient);
 
-    PatientDTO update(PatientDTO patientDTO, Integer id);
+    PatientDTO update(PatientDTO patientDTO);
 
-    void delete(Integer id);
+    void delete(String firstName, String lastName);
 }
