@@ -40,6 +40,11 @@ public class AddressValidator implements ConstraintValidator<ValidAddress, Strin
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
+        // Bean Validation best practice: constraints should be null-safe.
+        // If the value is null or blank, leave responsibility to other constraints (e.g., @NotBlank).
+        if (value == null || value.isBlank()) {
+            return true;
+        }
         return pattern.matcher(value).matches();
     }
 }

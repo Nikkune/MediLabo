@@ -5,6 +5,7 @@ import dev.nikkune.mspatient.model.Patient;
 import dev.nikkune.mspatient.service.IPatientService;
 import dev.nikkune.mspatient.validation.ValidationGroups;
 import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping
+@Validated
 public class PatientController {
     private static final Logger logger = LogManager.getLogger(PatientController.class);
     private final IPatientService patientService;
@@ -82,7 +84,7 @@ public class PatientController {
      * @return a ResponseEntity containing the saved Patient object and an HTTP status of 200 OK
      */
     @PostMapping
-    public PatientDTO createPatient(@RequestBody @Validated(ValidationGroups.Create.class) PatientDTO patient) {
+    public PatientDTO createPatient(@RequestBody @Validated({Default.class, ValidationGroups.Create.class}) PatientDTO patient) {
         logger.debug("Received request to create patient {}", patient);
         PatientDTO savedPatient = patientService.registerPatient(patient);
         logger.info("Created patient {}", savedPatient);
@@ -99,7 +101,7 @@ public class PatientController {
      * @return a ResponseEntity containing the updated Patient object
      */
     @PutMapping
-    public PatientDTO updatePatient(@RequestBody @Validated(ValidationGroups.Update.class) PatientDTO patient) {
+    public PatientDTO updatePatient(@RequestBody @Validated({Default.class, ValidationGroups.Update.class}) PatientDTO patient) {
         logger.debug("Received request to update patient {}", patient);
         PatientDTO updatedPatient = patientService.update(patient);
         logger.info("Updated patient {}", updatedPatient);
@@ -107,12 +109,13 @@ public class PatientController {
     }
 
     /**
-     * Deletes a patient identified by their unique ID.
+     * Deletes a patient identified by their first and last name.
      * <p>
      * This method removes the patient record from the database or repository
-     * with the specified ID, if it exists.
+     * with the specified first and last name, if it exists.
      *
-     * @param id the unique identifier of the patient to be deleted
+     * @param firstName the first name of the patient to be deleted
+     * @param lastName the last name of the patient to be deleted
      * @return a ResponseEntity with no content, indicating successful deletion
      */
     @DeleteMapping

@@ -57,7 +57,7 @@ class PatientControllerTest {
         List<PatientDTO> list = Arrays.asList(sampleDto(), sampleDto());
         given(patientService.findAll()).willReturn(list);
 
-        mockMvc.perform(get("/patient/all"))
+        mockMvc.perform(get("/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].lastName", is("Doe")));
@@ -67,7 +67,7 @@ class PatientControllerTest {
     void getPatientById_returnsPatient() throws Exception {
         given(patientService.findById(1)).willReturn(sampleDto());
 
-        mockMvc.perform(get("/patient/byId").param("id", "1"))
+        mockMvc.perform(get("/byId").param("id", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName", is("John")));
     }
@@ -76,7 +76,7 @@ class PatientControllerTest {
     void getPatientById_returns404_whenServiceThrows() throws Exception {
         given(patientService.findById(99)).willThrow(new RuntimeException("Patient with ID 99 does not exist"));
 
-        mockMvc.perform(get("/patient/byId").param("id", "99"))
+        mockMvc.perform(get("/byId").param("id", "99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message", is("Not found")))
                 .andExpect(jsonPath("$.success", is(false)));
@@ -86,7 +86,7 @@ class PatientControllerTest {
     void getByFirstNameAndLastName_returnsPatient() throws Exception {
         given(patientService.findByFirstNameAndLastName("John", "Doe")).willReturn(sampleDto());
 
-        mockMvc.perform(get("/patient").param("firstName", "John").param("lastName", "Doe"))
+        mockMvc.perform(get("/").param("firstName", "John").param("lastName", "Doe"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lastName", is("Doe")));
     }
@@ -96,7 +96,7 @@ class PatientControllerTest {
         PatientDTO payload = sampleDto();
         given(patientService.registerPatient(any(PatientDTO.class))).willReturn(payload);
 
-        mockMvc.perform(post("/patient")
+        mockMvc.perform(post("/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isOk())
@@ -107,7 +107,7 @@ class PatientControllerTest {
     void createPatient_invalidPayload_returns400() throws Exception {
         PatientDTO payload = new PatientDTO(); // missing required fields for Create group
 
-        mockMvc.perform(post("/patient")
+        mockMvc.perform(post("/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest())
@@ -118,11 +118,12 @@ class PatientControllerTest {
     @Test
     void updatePatient_returnsUpdated() throws Exception {
         PatientDTO patch = new PatientDTO();
-        patch.setAddress("New Address"); // Update group should allow partials
-        given(patientService.update(any(PatientDTO.class), eq(1))).willReturn(sampleDto());
+        patch.setFirstName("John");
+        patch.setLastName("Doe");
+        patch.setAddress("456 Oak Road"); // Use valid address per @ValidAddress
+        given(patientService.update(any(PatientDTO.class))).willReturn(sampleDto());
 
-        mockMvc.perform(put("/patient")
-                        .param("id", "1")
+        mockMvc.perform(put("/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patch)))
                 .andExpect(status().isOk())
@@ -131,7 +132,7 @@ class PatientControllerTest {
 
     @Test
     void deletePatient_returns200() throws Exception {
-        mockMvc.perform(delete("/patient").param("id", "1"))
+        mockMvc.perform(delete("/").param("firstName", "John").param("lastName", "Doe"))
                 .andExpect(status().isOk());
     }
 

@@ -70,14 +70,13 @@ class PatientServiceTest {
     @Test
     void findAll_shouldReturnMappedDTOs() {
         when(patientRepository.findAll()).thenReturn(Arrays.asList(activePatient, inactivePatient));
-        when(mapper.toDTO(activePatient)).thenReturn(dto);
-        when(mapper.toDTO(inactivePatient)).thenReturn(dto);
+        when(mapper.toDTO(any(Patient.class))).thenReturn(dto);
 
         List<PatientDTO> result = service.findAll();
 
-        assertEquals(2, result.size());
+        assertEquals(1, result.size(), "Only active patients should be returned");
         verify(patientRepository, times(1)).findAll();
-        verify(mapper, times(2)).toDTO(any(Patient.class));
+        verify(mapper, times(1)).toDTO(any(Patient.class));
     }
 
     @Test
@@ -146,7 +145,7 @@ class PatientServiceTest {
 
     @Test
     void update_shouldPersistChanges_whenActive() {
-        when(patientRepository.findById(1)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.findByFirstNameAndLastName("John", "Doe")).thenReturn(activePatient);
         // mapper.updatePatient is void; we ensure it is invoked
         doAnswer(inv -> {
             PatientDTO pdto = inv.getArgument(0);
@@ -159,11 +158,13 @@ class PatientServiceTest {
         when(mapper.toDTO(activePatient)).thenReturn(dto);
 
         PatientDTO patch = new PatientDTO();
+        patch.setFirstName("John");
+        patch.setLastName("Doe");
         patch.setAddress("New Address");
 
-        PatientDTO result = service.update(patch, 1);
+        PatientDTO result = service.update(patch);
         assertNotNull(result);
-        verify(patientRepository).findById(1);
+        verify(patientRepository).findByFirstNameAndLastName("John", "Doe");
         verify(mapper).updatePatient(patch, activePatient);
         verify(patientRepository).save(activePatient);
         verify(mapper).toDTO(activePatient);
@@ -171,19 +172,25 @@ class PatientServiceTest {
 
     @Test
     void update_shouldThrow_whenNotFoundOrInactive() {
-        when(patientRepository.findById(99)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> service.update(new PatientDTO(), 99));
+        PatientDTO ghost = new PatientDTO();
+        ghost.setFirstName("Ghost");
+        ghost.setLastName("User");
+        when(patientRepository.findByFirstNameAndLastName("Ghost", "User")).thenReturn(null);
+        assertThrows(RuntimeException.class, () -> service.update(ghost));
 
-        when(patientRepository.findById(2)).thenReturn(Optional.of(inactivePatient));
-        assertThrows(RuntimeException.class, () -> service.update(new PatientDTO(), 2));
+        PatientDTO jane = new PatientDTO();
+        jane.setFirstName("Jane");
+        jane.setLastName("Doe");
+        when(patientRepository.findByFirstNameAndLastName("Jane", "Doe")).thenReturn(inactivePatient);
+        assertThrows(RuntimeException.class, () -> service.update(jane));
     }
 
     @Test
     void delete_shouldSoftDelete_whenActive() {
-        when(patientRepository.findById(1)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.findByFirstNameAndLastName("John", "Doe")).thenReturn(activePatient);
         when(patientRepository.save(any(Patient.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.delete(1);
+        service.delete("John", "Doe");
 
         assertFalse(activePatient.getActive(), "Patient should be marked inactive on delete");
         verify(patientRepository).save(activePatient);
@@ -191,10 +198,10 @@ class PatientServiceTest {
 
     @Test
     void delete_shouldThrow_whenNotFoundOrInactive() {
-        when(patientRepository.findById(99)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> service.delete(99));
+        when(patientRepository.findByFirstNameAndLastName("Ghost", "User")).thenReturn(null);
+        assertThrows(RuntimeException.class, () -> service.delete("Ghost", "User"));
 
-        when(patientRepository.findById(2)).thenReturn(Optional.of(inactivePatient));
-        assertThrows(RuntimeException.class, () -> service.delete(2));
+        when(patientRepository.findByFirstNameAndLastName("Jane", "Doe")).thenReturn(inactivePatient);
+        assertThrows(RuntimeException.class, () -> service.delete("Jane", "Doe"));
     }
 }
