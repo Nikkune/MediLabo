@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&display=swap');
+
+*, ::before, ::after {
+  box-sizing: inherit;
+}
+
+:root {
+
+}
+
+body, #root, #root_layout {
+  height: 100svh;
+  width: 100vw;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin: 0;
+  font-family: Epilogue, sans-serif;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
