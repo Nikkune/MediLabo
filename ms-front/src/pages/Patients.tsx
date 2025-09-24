@@ -1,80 +1,194 @@
-import {Container, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
+import {Container} from "@mui/material";
 import {useEffect, useState} from "react";
-import {del, get} from "../lib/apiCall.ts";
-import {Delete, Edit} from "@mui/icons-material";
+import {del, get, post, put, type ApiError} from "../lib/apiCall.ts";
+import {Add, Close, Delete, Edit, Save} from "@mui/icons-material";
+import {toast} from "react-toastify";
+import type {Patient} from "../data/Patient.ts";
+import {DataGrid, GridActionsCellItem, GridRowEditStopReasons, type GridRowId, GridRowModes, type GridRowModesModel, Toolbar, ToolbarButton, type GridRowParams} from "@mui/x-data-grid";
+
+type PatientDTO = Omit<Patient, 'birthDate'> & { birthDate: string | null };
+type PatientRow = Omit<Patient, 'birthDate'> & { id: GridRowId; isNew?: boolean; birthDate: Date | null };
+
+function isApiError(value: unknown): value is ApiError {
+    return typeof value === 'object' && value !== null && 'success' in value && (value as { success?: unknown }).success === false;
+}
+
+const EditToolbar = ({setPatients, setRowModesModel}: { setPatients: React.Dispatch<React.SetStateAction<PatientRow[]>>; setRowModesModel: React.Dispatch<React.SetStateAction<GridRowModesModel>>; }) => {
+    const handleClick = () => {
+        const id = `new-${Date.now()}`;
+        setPatients((oldRows) => [
+            {id, lastName: '', firstName: '', birthDate: null, gender: 'M', address: '', phoneNumber: '', isNew: true},
+            ...oldRows,
+        ]);
+        setRowModesModel((oldModel) => ({...oldModel, [id]: {mode: GridRowModes.Edit, fieldToFocus: 'lastName'}}));
+    };
+    return (
+        <Toolbar>
+            <ToolbarButton onClick={handleClick}>
+                <Add/>
+            </ToolbarButton>
+        </Toolbar>
+    );
+};
 
 export default function Patients() {
-    const [patients, setPatients] = useState([]);
+    const [patients, setPatients] = useState<PatientRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
 
     async function fetchPatients() {
         setIsLoading(true);
         try {
-            const patient = await get('/patient/all');
-            setPatients(patient);
-        } catch (error) {
-            console.log(error);
+            const patient = await get<PatientDTO[]>("/patient/all");
+            if (isApiError(patient)) {
+                toast.error(patient.message || 'Failed to fetch patients');
+                setPatients([]);
+                return;
+            }
+            const list: PatientDTO[] = Array.isArray(patient) ? patient : [];
+            const rows: PatientRow[] = list.map((p, index) => ({
+                id: index,
+                firstName: p.firstName,
+                lastName: p.lastName,
+                birthDate: p.birthDate ? new Date(p.birthDate) : null,
+                gender: p.gender,
+                address: p.address,
+                phoneNumber: p.phoneNumber,
+            }));
+            setPatients(rows);
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : 'Failed to fetch patients';
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }
     }
 
     async function deletePatient(firstName: string, lastName: string) {
-        const patient = await del('/patient', {firstName, lastName});
-        if (patient.success) {
-            setPatients(patients.filter((p) => p.firstName !== firstName || p.lastName !== lastName));
+        try {
+            const res = await del<unknown>('/patient', {firstName, lastName});
+            if (isApiError(res)) {
+                const errs = res.errors;
+                const errText = errs ? Object.values(errs).join(', ') : res.error ?? undefined;
+                const base = res.message || 'Failed to delete patient';
+                toast.error(errText ? `${base}: ${errText}` : base);
+                return;
+            }
+            toast.success('Patient deleted successfully');
+            await fetchPatients();
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : 'Failed to delete patient';
+            toast.error(msg);
         }
     }
+
+    const handleRowEditStop = (params: { reason?: unknown }, event: { defaultMuiPrevented?: boolean }) => {
+        if ((params as { reason?: string }).reason === GridRowEditStopReasons.rowFocusOut) {
+            event.defaultMuiPrevented = true;
+        }
+    };
+
+    const handleEditClick = (id: GridRowId) => () => {
+        setRowModesModel((prev) => ({...prev, [id]: {mode: GridRowModes.Edit}}));
+    };
+
+    const handleSaveClick = (id: GridRowId) => () => {
+        setRowModesModel((prev) => ({...prev, [id]: {mode: GridRowModes.View}}));
+    };
+
+    const handleCancelClick = (id: GridRowId) => () => {
+        setRowModesModel((prev) => ({...prev, [id]: {mode: GridRowModes.View, ignoreModifications: true}}));
+        setPatients((prev) => prev.map((row) => (row.id === id ? {...row, isNew: false} : row)));
+    };
+
+    const processRowUpdate = async (newRow: PatientRow, oldRow: PatientRow): Promise<PatientRow> => {
+        const payload: PatientDTO = {
+            firstName: newRow.firstName,
+            lastName: newRow.lastName,
+            birthDate: newRow.birthDate ? newRow.birthDate.toISOString() : null,
+            gender: newRow.gender,
+            address: newRow.address,
+            phoneNumber: newRow.phoneNumber,
+        };
+
+        const isCreate = !!oldRow?.isNew;
+        const res = isCreate ? await post<PatientDTO>('/patient', payload) : await put<PatientDTO>('/patient', payload);
+        if (isApiError(res)) {
+            const base = res.message || (isCreate ? 'Failed to create patient' : 'Failed to update patient');
+            toast.error(base);
+            throw new Error(base);
+        }
+        toast.success(isCreate ? 'Patient created successfully' : 'Patient updated successfully');
+        const updatedRow: PatientRow = {...newRow, isNew: false};
+        setPatients((prev) => prev.map((row) => (row.id === newRow.id ? updatedRow : row)));
+        return updatedRow;
+    };
 
     useEffect(() => {
         void fetchPatients();
     }, [])
+
     return (
         <Container>
             <h1>Patients</h1>
-            <TableContainer>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>First Name</TableCell>
-                            <TableCell>Last Name</TableCell>
-                            <TableCell>Birth Date</TableCell>
-                            <TableCell>Gender</TableCell>
-                            <TableCell>Address</TableCell>
-                            <TableCell>Phone Number</TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {
-                            isLoading ? (<>Loading...</>) :
-                                patients.map((patient) => (
-                                    <TableRow key={`Patient_${patient.firstName}_${patient.lastName}`}>
-                                        <TableCell>{patient.firstName}</TableCell>
-                                        <TableCell>{patient.lastName}</TableCell>
-                                        <TableCell>{new Date(patient.birthDate).toLocaleDateString()}</TableCell>
-                                        <TableCell>{patient.gender}</TableCell>
-                                        <TableCell>{patient.address}</TableCell>
-                                        <TableCell>{patient.phoneNumber}</TableCell>
-                                        <TableCell>
-                                            <Stack direction="row" spacing={2}>
-                                                <IconButton>
-                                                    <Edit/>
-                                                </IconButton>
-                                                <IconButton onClick={(e) => {
-                                                    e.preventDefault()
-                                                    void deletePatient(patient.firstName, patient.lastName)
-                                                }}>
-                                                    <Delete/>
-                                                </IconButton>
-                                            </Stack>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+            <DataGrid<PatientRow>
+                columns={[
+                    {field: "lastName", headerName: "Last Name", flex: 1, editable: true},
+                    {field: "firstName", headerName: "First Name", flex: 1, editable: true},
+                    {
+                        field: "birthDate",
+                        headerName: "Birth Date",
+                        type: 'date',
+                        flex: 1,
+                        editable: true,
+                        valueFormatter: (value: unknown) => {
+                            if (value == null) {
+                                return '';
+                            }
+                            try {
+                                const d = value instanceof Date ? value : new Date(String(value));
+                                return d.toLocaleDateString();
+                            } catch {
+                                return '';
+                            }
                         }
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                    },
+                    {field: "gender", headerName: "Gender", type: 'singleSelect', flex: 1, valueOptions: ["M", "F"], editable: true},
+                    {field: "address", headerName: "Address", flex: 1, editable: true},
+                    {field: "phoneNumber", headerName: "Phone Number", flex: 1, editable: true},
+                    {
+                        field: 'actions',
+                        headerName: 'Actions',
+                        type: 'actions',
+                        getActions: (params: GridRowParams<PatientRow>) => {
+                            const {id} = params;
+                            const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+                            if (isInEditMode) {
+                                return [
+                                    <GridActionsCellItem onClick={handleSaveClick(id)} icon={<Save/>} label="Save"/>,
+                                    <GridActionsCellItem onClick={handleCancelClick(id)} icon={<Close/>} label="Cancel"/>,
+                                ];
+                            }
+
+                            return [
+                                <GridActionsCellItem onClick={handleEditClick(id)} icon={<Edit/>} label="Edit"/>,
+                                <GridActionsCellItem icon={<Delete/>} onClick={() => void deletePatient(params.row.firstName, params.row.lastName)} label="Delete"/>,
+                            ]
+                        }
+                    },
+                ]}
+                editMode="row"
+                rowModesModel={rowModesModel}
+                onRowModesModelChange={(newModel) => setRowModesModel(newModel)}
+                onRowEditStop={handleRowEditStop}
+                processRowUpdate={processRowUpdate}
+                rows={patients}
+                loading={isLoading}
+                slots={{toolbar: EditToolbar}}
+                slotProps={{toolbar: {setPatients, setRowModesModel}}}
+                showToolbar
+            />
         </Container>
     )
 }

@@ -2,6 +2,7 @@ import Header from "./layouts/Header.tsx";
 import {Route, Routes} from "react-router-dom";
 import Home from "./pages/Home.tsx";
 import Patients from "./pages/Patients.tsx";
+import {Bounce, ToastContainer} from "react-toastify";
 
 export default function App() {
     return(
@@ -11,6 +12,19 @@ export default function App() {
                 <Route path="/" element={<Home/>}/>
                 <Route path="/patients" element={<Patients/>}/>
             </Routes>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick={false}
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+                transition={Bounce}
+            />
         </div>
     )
 }

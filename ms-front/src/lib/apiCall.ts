@@ -17,12 +17,26 @@ apiCall.interceptors.request.use((config) => {
     return config;
 });
 
-function handleError(error: unknown) {
+export interface ApiError {
+    success: false;
+    message: string;
+    error: string | null;
+    errors: Record<string, string> | null;
+}
+
+function handleError(error: unknown): ApiError {
     let message = "An error occurred";
-    let errorDescription = null;
+    let errorDescription: string | null = null;
+    let errors: Record<string, string> | null = null;
     if (axios.isAxiosError(error)) {
         message = (error.response?.data?.message) ?? message;
-        errorDescription = (error.response?.data?.error) ?? errorDescription;
+        errorDescription = (error.response?.data?.error) ?? null;
+        errors = (error.response?.data?.errors) ?? null;
+        // If backend provided detailed validation errors, append them to the message for convenience
+        if (errors && Object.keys(errors).length > 0) {
+            const details = Object.entries(errors).map(([k, v]) => `${k}: ${v}`).join(", ");
+            message = `${message}${details ? `: ${details}` : ''}`;
+        }
     } else if (error instanceof Error) {
         message = error.message;
     }
@@ -30,39 +44,42 @@ function handleError(error: unknown) {
         success: false,
         message,
         error: errorDescription,
-    }
+        errors,
+    };
 }
 
-export async function get(url: string, params?: object) {
+export type ApiResult<T> = T | ApiError;
+
+export async function get<T = unknown>(url: string, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.get(url, {params});
+        const response = await apiCall.get<T>(url, { params });
         return response.data;
     } catch (error) {
         return handleError(error);
     }
 }
 
-export async function post(url: string, data: object, params?: object) {
+export async function post<T = unknown>(url: string, data: unknown, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.post(url, data, {params});
+        const response = await apiCall.post<T>(url, data, { params });
         return response.data;
     } catch (error) {
         return handleError(error);
     }
 }
 
-export async function put(url: string, data: object, params?: object) {
+export async function put<T = unknown>(url: string, data: unknown, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.put(url, data, {params});
+        const response = await apiCall.put<T>(url, data, { params });
         return response.data;
     } catch (error) {
         return handleError(error);
     }
 }
 
-export async function del(url:string, params?: object) {
+export async function del<T = unknown>(url: string, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.delete(url, {params});
+        const response = await apiCall.delete<T>(url, { params });
         return response.data;
     } catch (error) {
         return handleError(error);
