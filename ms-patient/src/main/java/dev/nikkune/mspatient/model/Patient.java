@@ -7,7 +7,7 @@ import java.util.Date;
 
 /**
  * Represents a patient in the system.
- *
+ * <p>
  * A Patient object contains personal information including name, birth date,
  * gender, contact details, and other relevant attributes for identifying and managing
  * patients in a healthcare or related system.

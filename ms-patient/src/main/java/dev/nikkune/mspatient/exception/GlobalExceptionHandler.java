@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * A global exception handler to intercept and manage exceptions across the entire application,
  * providing appropriate HTTP status codes and error responses.
- *
+ * <p>
  * This class uses the {@code @ControllerAdvice} annotation to centralize exception handling
  * and make it applicable to all controllers in the application. Specific exception types
  * are handled using {@code @ExceptionHandler} methods that map the exceptions to the
@@ -95,14 +95,14 @@ public class GlobalExceptionHandler {
     /**
      * Handles exceptions of type {@link ConstraintViolationException} by collecting validation errors
      * and formatting them into a response entity.
-     *
+     * <p>
      * Each validation error is mapped to its respective field name and error message.
      * The method returns a response entity with a 400 Bad Request status indicating
      * that the request could not be processed due to validation issues.
      *
      * @param e the {@link ConstraintViolationException} containing validation violations
      * @return a {@link ResponseEntity} containing a structured response with the
-     *         validation errors, a failure flag, and an appropriate error message
+     * validation errors, a failure flag, and an appropriate error message
      */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(ConstraintViolationException e) {

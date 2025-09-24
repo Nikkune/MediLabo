@@ -4,7 +4,6 @@ import dev.nikkune.mspatient.dto.PatientDTO;
 import dev.nikkune.mspatient.mapper.PatientMapper;
 import dev.nikkune.mspatient.model.Patient;
 import dev.nikkune.mspatient.repository.PatientRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

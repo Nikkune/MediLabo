@@ -1,15 +1,12 @@
 package dev.nikkune.mspatient.controller;
 
 import dev.nikkune.mspatient.dto.PatientDTO;
-import dev.nikkune.mspatient.exception.GlobalExceptionHandler;
 import dev.nikkune.mspatient.model.Patient;
 import dev.nikkune.mspatient.service.IPatientService;
-import dev.nikkune.mspatient.service.PatientService;
 import dev.nikkune.mspatient.validation.ValidationGroups;
 import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

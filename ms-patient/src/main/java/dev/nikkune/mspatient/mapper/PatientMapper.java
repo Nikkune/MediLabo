@@ -8,7 +8,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 /**
  * Mapper interface for converting between {@link PatientDTO} and {@link Patient} objects.
- *
+ * <p>
  * This interface is annotated with {@link Mapper} to indicate that it is a MapStruct mapper.
  * It provides methods for mapping the data transfer object (DTO) representation of a patient
  * to its corresponding entity representation and for updating existing patient entities with new DTO data.
@@ -34,5 +34,5 @@ public interface PatientMapper {
      * @param patientDTO the data transfer object containing the updated patient details
      * @param patient    the target Patient entity to be updated
      */
-    void updatePatient(PatientDTO patientDTO,@MappingTarget Patient patient);
+    void updatePatient(PatientDTO patientDTO, @MappingTarget Patient patient);
 }

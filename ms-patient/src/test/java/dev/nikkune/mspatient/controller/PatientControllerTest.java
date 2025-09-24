@@ -12,8 +12,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -24,7 +24,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = PatientController.class)
 @Import({GlobalExceptionHandler.class, PatientControllerTest.MockConfig.class})
@@ -39,14 +40,6 @@ class PatientControllerTest {
 
     @Autowired
     private IPatientService patientService;
-
-    @TestConfiguration
-    static class MockConfig {
-        @Bean
-        IPatientService patientService() {
-            return Mockito.mock(IPatientService.class);
-        }
-    }
 
     private PatientDTO sampleDto() {
         PatientDTO dto = new PatientDTO();
@@ -140,5 +133,13 @@ class PatientControllerTest {
     void deletePatient_returns200() throws Exception {
         mockMvc.perform(delete("/patient").param("id", "1"))
                 .andExpect(status().isOk());
+    }
+
+    @TestConfiguration
+    static class MockConfig {
+        @Bean
+        IPatientService patientService() {
+            return Mockito.mock(IPatientService.class);
+        }
     }
 }

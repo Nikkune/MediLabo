@@ -25,7 +25,7 @@ import java.util.Date;
  * <p>
  * Field validations:
  * - `lastName`, `firstName`, `birthDate`, `gender`, `address`, and `phoneNumber`
- *   are mandatory fields.
+ * are mandatory fields.
  * - `lastName` and `firstName` must be between 3 and 100 characters.
  * - `birthDate` must be in the past.
  * - `gender` must match the pattern "M" or "F".

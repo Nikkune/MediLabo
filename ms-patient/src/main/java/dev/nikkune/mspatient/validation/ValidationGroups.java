@@ -6,6 +6,9 @@ package dev.nikkune.mspatient.validation;
  * rules for different operations such as creation or update of entities.
  */
 public class ValidationGroups {
-    public interface Create {}
-    public interface Update {}
+    public interface Create {
+    }
+
+    public interface Update {
+    }
 }

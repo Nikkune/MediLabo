@@ -22,9 +22,9 @@ import java.util.regex.Pattern;
  * <p>
  * Methods:
  * - {@code initialize(ValidAddress constraintAnnotation)}: Compiles the regular expression
- *   for validating addresses based on the suffixes provided in the annotation.
+ * for validating addresses based on the suffixes provided in the annotation.
  * - {@code isValid(String value, ConstraintValidatorContext context)}: Validates whether
- *   the provided value matches the compiled address pattern.
+ * the provided value matches the compiled address pattern.
  */
 public class AddressValidator implements ConstraintValidator<ValidAddress, String> {
 

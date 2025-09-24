@@ -54,11 +54,6 @@ class GlobalExceptionHandlerTest {
         assertEquals("Internal server error", response.getBody().get("message"));
     }
 
-    static class DummyBean {
-        @NotBlank(message = "must not be blank")
-        String name;
-    }
-
     @Test
     void handleValidationExceptions_shouldExtractFieldNames_fromConstraintViolationException() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
@@ -77,5 +72,10 @@ class GlobalExceptionHandlerTest {
         Map<String, String> errors = (Map<String, String>) response.getBody().get("errors");
         assertTrue(errors.containsKey("name"));
         assertNotNull(errors.get("name"));
+    }
+
+    static class DummyBean {
+        @NotBlank(message = "must not be blank")
+        String name;
     }
 }
