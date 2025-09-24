@@ -8,6 +8,23 @@ spring:
     gateway:
       server:
         webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - http://localhost:5173
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                allowed-headers:
+                  - Authorization
+                  - Content-Type
+                  - Accept
+                exposed-headers:
+                  - Authorization
+                allow-credentials: true
           discovery:
             locator:
               enabled: true
