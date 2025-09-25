@@ -3,6 +3,7 @@ import {Route, Routes} from "react-router-dom";
 import Home from "./pages/Home.tsx";
 import Patients from "./pages/Patients.tsx";
 import {Bounce, ToastContainer} from "react-toastify";
+import Note from "./pages/Note.tsx";
 
 export default function App() {
     return(
@@ -11,6 +12,7 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<Home/>}/>
                 <Route path="/patients" element={<Patients/>}/>
+                <Route path="/notes" element={<Note/>}/>
             </Routes>
             <ToastContainer
                 position="top-right"

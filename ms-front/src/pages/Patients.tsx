@@ -1,7 +1,8 @@
 import {Container} from "@mui/material";
 import {useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import {del, get, post, put, type ApiError} from "../lib/apiCall.ts";
-import {Add, Close, Delete, Edit, Save} from "@mui/icons-material";
+import {Add, Close, Delete, Edit, Save, Note} from "@mui/icons-material";
 import {toast} from "react-toastify";
 import type {Patient} from "../data/Patient.ts";
 import {DataGrid, GridActionsCellItem, GridRowEditStopReasons, type GridRowId, GridRowModes, type GridRowModesModel, Toolbar, ToolbarButton, type GridRowParams} from "@mui/x-data-grid";
@@ -35,6 +36,7 @@ export default function Patients() {
     const [patients, setPatients] = useState<PatientRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+    const navigate = useNavigate();
 
     async function fetchPatients() {
         setIsLoading(true);
@@ -166,14 +168,15 @@ export default function Patients() {
 
                             if (isInEditMode) {
                                 return [
-                                    <GridActionsCellItem onClick={handleSaveClick(id)} icon={<Save/>} label="Save"/>,
+                                    <GridActionsCellItem onClick={handleSaveClick(id)} icon={<Save/>} label="Save" showInMenu/>,
                                     <GridActionsCellItem onClick={handleCancelClick(id)} icon={<Close/>} label="Cancel"/>,
                                 ];
                             }
 
                             return [
-                                <GridActionsCellItem onClick={handleEditClick(id)} icon={<Edit/>} label="Edit"/>,
-                                <GridActionsCellItem icon={<Delete/>} onClick={() => void deletePatient(params.row.firstName, params.row.lastName)} label="Delete"/>,
+                                <GridActionsCellItem icon={<Note/>} onClick={() => navigate(`/notes?firstName=${params.row.firstName}&lastName=${params.row.lastName}`)} label="Notes" showInMenu/>,
+                                <GridActionsCellItem onClick={handleEditClick(id)} icon={<Edit/>} label="Edit" showInMenu/>,
+                                <GridActionsCellItem icon={<Delete/>} onClick={() => void deletePatient(params.row.firstName, params.row.lastName)} label="Delete" showInMenu/>,
                             ]
                         }
                     },

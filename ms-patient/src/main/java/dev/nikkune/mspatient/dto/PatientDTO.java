@@ -52,11 +52,9 @@ public class PatientDTO {
     @Pattern(regexp = "^([MF])$", message = "Gender must be either M or F")
     private String gender;
 
-    @NotBlank(message = "Address must be provided", groups = ValidationGroups.Create.class)
     @ValidAddress
     private String address;
 
-    @NotBlank(message = "Phone number must be provided", groups = ValidationGroups.Create.class)
     @Pattern(regexp = "\\d{3}-\\d{3}-\\d{4}", message = "Phone number must be xxx-xxx-xxxx")
     private String phoneNumber;
 }
