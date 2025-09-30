@@ -66,7 +66,6 @@ public class PatientService implements IPatientService {
         return mapper.toDTO(patient);
     }
 
-
     /**
      * Registers a new patient in the system.
      * <p>

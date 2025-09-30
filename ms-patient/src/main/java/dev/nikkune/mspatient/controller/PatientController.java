@@ -115,7 +115,7 @@ public class PatientController {
      * with the specified first and last name, if it exists.
      *
      * @param firstName the first name of the patient to be deleted
-     * @param lastName the last name of the patient to be deleted
+     * @param lastName  the last name of the patient to be deleted
      * @return a ResponseEntity with no content, indicating successful deletion
      */
     @DeleteMapping
