@@ -12,6 +12,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+/**
+ * Client class for interacting with the Patient microservice. This class provides
+ * functionality to check the existence of a patient based on their first and last name.
+ * It uses a REST client to make requests to the configured patient service API.
+ */
 @Component
 public class PatientClient {
     private static final Logger logger = LogManager.getLogger(PatientClient.class);
@@ -20,6 +25,14 @@ public class PatientClient {
     private final String baseUrl;
     private final String authHeader;
 
+    /**
+     * Constructs a PatientClient instance for interacting with the Patient microservice.
+     * It initializes the base URL, authentication header, and REST client for making API requests.
+     *
+     * @param baseUrl the base URL of the Patient microservice, loaded from application properties.
+     * @param username the username for Basic authentication with the Patient microservice. Defaults to "medilabo".
+     * @param password the password for Basic authentication with the Patient microservice. Defaults to "medilabo123".
+     */
     public PatientClient(
             @Value("${ms.patient.base-url}") String baseUrl,
             @Value("${ms.patient.username:medilabo}") String username,
@@ -35,6 +48,15 @@ public class PatientClient {
         this.restClient = RestClient.create();
     }
 
+    /**
+     * Checks if a patient exists based on their first and last name by making a request
+     * to the patient service API.
+     *
+     * @param firstName the first name of the patient to check
+     * @param lastName the last name of the patient to check
+     * @return true if the patient exists and the request is successful; false if the
+     *         patient is not found. Throws an exception in case of other errors.
+     */
     public boolean exists(String firstName, String lastName) {
         String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
                 .queryParam("firstName", firstName)

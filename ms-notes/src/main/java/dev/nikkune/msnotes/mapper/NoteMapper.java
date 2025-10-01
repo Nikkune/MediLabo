@@ -7,10 +7,8 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface NoteMapper {
-    NoteMapper INSTANCE = Mappers.getMapper(NoteMapper.class);
-
     NoteDTO toDto(Note note);
     List<NoteDTO> toDtoList(List<Note> notes);
 }
