@@ -1,13 +1,13 @@
-import {Container} from "@mui/material";
+import {Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {del, get, post, put, type ApiError} from "../lib/apiCall.ts";
-import {Add, Close, Delete, Edit, Save, Note} from "@mui/icons-material";
+import {type ApiError, del, get, post, put} from "../lib/apiCall.ts";
+import {Add, Close, Delete, Edit, Note, Save} from "@mui/icons-material";
 import {toast} from "react-toastify";
 import type {Patient} from "../data/Patient.ts";
-import {DataGrid, GridActionsCellItem, GridRowEditStopReasons, type GridRowId, GridRowModes, type GridRowModesModel, Toolbar, ToolbarButton, type GridRowParams} from "@mui/x-data-grid";
+import {DataGrid, GridActionsCellItem, GridRowEditStopReasons, type GridRowId, GridRowModes, type GridRowModesModel, type GridRowParams, Toolbar, ToolbarButton} from "@mui/x-data-grid";
 
-type PatientDTO = Omit<Patient, 'birthDate'> & { birthDate: string | null };
+type PatientDTO = Omit<Patient, 'birthDate' | 'address' | 'phoneNumber'> & { birthDate: string | null; address: string | null; phoneNumber: string | null };
 type PatientRow = Omit<Patient, 'birthDate'> & { id: GridRowId; isNew?: boolean; birthDate: Date | null };
 
 function isApiError(value: unknown): value is ApiError {
@@ -33,6 +33,8 @@ const EditToolbar = ({setPatients, setRowModesModel}: { setPatients: React.Dispa
 };
 
 export default function Patients() {
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<{ firstName: string; lastName: string } | null>(null);
     const [patients, setPatients] = useState<PatientRow[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
@@ -54,8 +56,8 @@ export default function Patients() {
                 lastName: p.lastName,
                 birthDate: p.birthDate ? new Date(p.birthDate) : null,
                 gender: p.gender,
-                address: p.address,
-                phoneNumber: p.phoneNumber,
+                address: p.address ?? '',
+                phoneNumber: p.phoneNumber ?? '',
             }));
             setPatients(rows);
         } catch (error: unknown) {
@@ -104,14 +106,18 @@ export default function Patients() {
     };
 
     const processRowUpdate = async (newRow: PatientRow, oldRow: PatientRow): Promise<PatientRow> => {
-        const payload: PatientDTO = {
+        const payload = {
             firstName: newRow.firstName,
             lastName: newRow.lastName,
             birthDate: newRow.birthDate ? newRow.birthDate.toISOString() : null,
             gender: newRow.gender,
-            address: newRow.address,
-            phoneNumber: newRow.phoneNumber,
-        };
+        }
+        if (newRow.address?.trim()) {
+            payload.address = newRow.address.trim();
+        }
+        if (newRow.phoneNumber?.trim()) {
+            payload.phoneNumber = newRow.phoneNumber.trim();
+        }
 
         const isCreate = !!oldRow?.isNew;
         const res = isCreate ? await post<PatientDTO>('/patient', payload) : await put<PatientDTO>('/patient', payload);
@@ -132,7 +138,7 @@ export default function Patients() {
 
     return (
         <Container>
-            <h1>Patients</h1>
+            <Typography variant="h4">Patients</Typography>
             <DataGrid<PatientRow>
                 columns={[
                     {field: "lastName", headerName: "Last Name", flex: 1, editable: true},
@@ -176,7 +182,15 @@ export default function Patients() {
                             return [
                                 <GridActionsCellItem icon={<Note/>} onClick={() => navigate(`/notes?firstName=${params.row.firstName}&lastName=${params.row.lastName}`)} label="Notes" showInMenu/>,
                                 <GridActionsCellItem onClick={handleEditClick(id)} icon={<Edit/>} label="Edit" showInMenu/>,
-                                <GridActionsCellItem icon={<Delete/>} onClick={() => void deletePatient(params.row.firstName, params.row.lastName)} label="Delete" showInMenu/>,
+                                <GridActionsCellItem
+                                    icon={<Delete/>}
+                                    onClick={() => {
+                                        setDeleteTarget({firstName: params.row.firstName, lastName: params.row.lastName});
+                                        setDeleteOpen(true);
+                                    }}
+                                    label="Delete"
+                                    showInMenu
+                                />,
                             ]
                         }
                     },
@@ -192,6 +206,26 @@ export default function Patients() {
                 slotProps={{toolbar: {setPatients, setRowModesModel}}}
                 showToolbar
             />
+            {/* Delete Confirm Dialog */}
+            <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Delete patient</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2">{`Delete patient ${deleteTarget ? (deleteTarget.firstName + ' ' + deleteTarget.lastName).trim() : ''}? This action cannot be undone.`}</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => {
+                        setDeleteOpen(false);
+                        setDeleteTarget(null);
+                    }}>Cancel</Button>
+                    <Button color="error" onClick={async () => {
+                        if (deleteTarget) {
+                            await deletePatient(deleteTarget.firstName, deleteTarget.lastName);
+                        }
+                        setDeleteOpen(false);
+                        setDeleteTarget(null);
+                    }}>Delete</Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     )
 }

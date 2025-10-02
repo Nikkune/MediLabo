@@ -6,7 +6,7 @@ export default function Header() {
     const navigate = useNavigate();
 
     return (
-        <AppBar position="static">
+        <AppBar position="static" sx={{marginBottom: '1rem'}}>
             <Toolbar>
                 <Typography
                     variant="h6"

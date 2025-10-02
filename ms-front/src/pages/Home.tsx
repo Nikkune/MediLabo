@@ -1,9 +1,9 @@
-import {Container} from "@mui/material";
+import {Container, Typography} from "@mui/material";
 
 export default function Home() {
-    return(
+    return (
         <Container>
-            <h1>Home</h1>
+            <Typography variant="h4">Home</Typography>
         </Container>
     )
 }

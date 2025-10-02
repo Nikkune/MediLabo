@@ -3,6 +3,6 @@ export interface Patient {
     lastName: string;
     birthDate: Date;
     gender: string;
-    address: string;
-    phoneNumber: string;
+    address: string | null;
+    phoneNumber: string | null;
 }

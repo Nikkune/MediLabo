@@ -52,7 +52,7 @@ export type ApiResult<T> = T | ApiError;
 
 export async function get<T = unknown>(url: string, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.get<T>(url, { params });
+        const response = await apiCall.get<T>(url, {params});
         return response.data;
     } catch (error) {
         return handleError(error);
@@ -61,7 +61,7 @@ export async function get<T = unknown>(url: string, params?: Record<string, unkn
 
 export async function post<T = unknown>(url: string, data: unknown, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.post<T>(url, data, { params });
+        const response = await apiCall.post<T>(url, data, {params});
         return response.data;
     } catch (error) {
         return handleError(error);
@@ -70,7 +70,7 @@ export async function post<T = unknown>(url: string, data: unknown, params?: Rec
 
 export async function put<T = unknown>(url: string, data: unknown, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.put<T>(url, data, { params });
+        const response = await apiCall.put<T>(url, data, {params});
         return response.data;
     } catch (error) {
         return handleError(error);
@@ -79,7 +79,7 @@ export async function put<T = unknown>(url: string, data: unknown, params?: Reco
 
 export async function del<T = unknown>(url: string, params?: Record<string, unknown>): Promise<ApiResult<T>> {
     try {
-        const response = await apiCall.delete<T>(url, { params });
+        const response = await apiCall.delete<T>(url, {params});
         return response.data;
     } catch (error) {
         return handleError(error);
