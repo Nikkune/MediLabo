@@ -110,11 +110,13 @@ public class NoteService implements INoteService {
      * @throws NoteNotFoundException if the note does not exist or is already inactive
      */
     public void delete(String id) {
-        if (!noteRepository.existsById(id) || !get(id).getActive()) {
+        Note existing = get(id);
+        if (!existing.getActive()) {
             throw new NoteNotFoundException(id);
         }
-        get(id).setActive(false);
-        noteRepository.save(get(id));
+        existing.setActive(false);
+        existing.setUpdatedAt(new Date());
+        noteRepository.save(existing);
     }
 
     /**
