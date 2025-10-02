@@ -78,6 +78,9 @@ public class PatientService implements IPatientService {
     @Override
     public PatientDTO registerPatient(PatientDTO patient) {
         Patient patientEntity = mapper.toPatient(patient);
+        if (patientRepository.findByFirstNameAndLastName(patientEntity.getFirstName(), patientEntity.getLastName()) != null) {
+            throw new RuntimeException("Patient with first name " + patientEntity.getFirstName() + " and last name " + patientEntity.getLastName() + " already exists");
+        }
         patientEntity.setActive(true);
         Patient registeredPatient = patientRepository.save(patientEntity);
         return mapper.toDTO(registeredPatient);
