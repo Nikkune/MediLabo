@@ -35,7 +35,7 @@ public class NoteServiceTest {
     public void listNotes_returnsNotes_whenPatientExists() {
         when(patientClient.exists("John", "Doe")).thenReturn(true);
         Note n1 = new Note(); n1.setFirstName("John"); n1.setLastName("Doe"); n1.setNote("a"); n1.setCreatedAt(new Date());
-        when(noteRepository.findByFirstNameAndLastNameOrderByCreatedAtDesc("John","Doe"))
+        when(noteRepository.findByFirstNameAndLastNameAndActiveTrueOrderByUpdatedAtDesc("John","Doe"))
                 .thenReturn(Arrays.asList(n1));
 
         List<Note> result = noteService.list("John","Doe");

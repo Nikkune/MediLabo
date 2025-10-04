@@ -32,9 +32,8 @@ public class PatientService implements IPatientService {
      */
     @Override
     public List<PatientDTO> findAll() {
-        List<Patient> patients = patientRepository.findAll();
-        List<Patient> activePatients = patients.stream().filter(Patient::getActive).toList();
-        return activePatients.stream().map(mapper::toDTO).toList();
+        List<Patient> patients = patientRepository.findAllByActiveTrue();
+        return patients.stream().map(mapper::toDTO).toList();
     }
 
     /**
@@ -60,8 +59,8 @@ public class PatientService implements IPatientService {
      */
     @Override
     public PatientDTO findByFirstNameAndLastName(String firstName, String lastName) {
-        Patient patient = patientRepository.findByFirstNameAndLastName(firstName, lastName);
-        if (patient == null || patient.getActive() == false)
+        Patient patient = patientRepository.findByFirstNameAndLastNameAndActiveTrue(firstName, lastName);
+        if (patient == null)
             throw new RuntimeException("Patient with first name " + firstName + " and last name " + lastName + " does not exist");
         return mapper.toDTO(patient);
     }
@@ -78,7 +77,7 @@ public class PatientService implements IPatientService {
     @Override
     public PatientDTO registerPatient(PatientDTO patient) {
         Patient patientEntity = mapper.toPatient(patient);
-        if (patientRepository.findByFirstNameAndLastName(patientEntity.getFirstName(), patientEntity.getLastName()) != null) {
+        if (patientRepository.findByFirstNameAndLastNameAndActiveTrue(patientEntity.getFirstName(), patientEntity.getLastName()) != null) {
             throw new RuntimeException("Patient with first name " + patientEntity.getFirstName() + " and last name " + patientEntity.getLastName() + " already exists");
         }
         patientEntity.setActive(true);
@@ -102,8 +101,8 @@ public class PatientService implements IPatientService {
     public PatientDTO update(PatientDTO patientDTO) {
         String firstName = patientDTO.getFirstName();
         String lastName = patientDTO.getLastName();
-        Patient patient = patientRepository.findByFirstNameAndLastName(firstName, lastName);
-        if (patient == null || patient.getActive() == false)
+        Patient patient = patientRepository.findByFirstNameAndLastNameAndActiveTrue(firstName, lastName);
+        if (patient == null)
             throw new RuntimeException("Patient with first name " + firstName + " and last name " + lastName + " does not exist");
 
         mapper.updatePatient(patientDTO, patient);
@@ -121,8 +120,8 @@ public class PatientService implements IPatientService {
      */
     @Override
     public void delete(String firstName, String lastName) {
-        Patient patient = patientRepository.findByFirstNameAndLastName(firstName, lastName);
-        if (patient == null || patient.getActive() == false)
+        Patient patient = patientRepository.findByFirstNameAndLastNameAndActiveTrue(firstName, lastName);
+        if (patient == null)
             throw new RuntimeException("Patient with first name " + firstName + " and last name " + lastName + " does not exist");
 
         patient.setActive(false);

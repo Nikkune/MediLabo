@@ -107,21 +107,21 @@ class PatientServiceTest {
 
     @Test
     void findByFirstNameAndLastName_shouldReturnDTO_whenActive() {
-        when(patientRepository.findByFirstNameAndLastName("John", "Doe")).thenReturn(activePatient);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("John", "Doe")).thenReturn(activePatient);
         when(mapper.toDTO(activePatient)).thenReturn(dto);
 
         PatientDTO result = service.findByFirstNameAndLastName("John", "Doe");
         assertNotNull(result);
-        verify(patientRepository).findByFirstNameAndLastName("John", "Doe");
+        verify(patientRepository).findByFirstNameAndLastNameAndActiveTrue("John", "Doe");
         verify(mapper).toDTO(activePatient);
     }
 
     @Test
     void findByFirstNameAndLastName_shouldThrow_whenNotFoundOrInactive() {
-        when(patientRepository.findByFirstNameAndLastName("Ghost", "User")).thenReturn(null);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Ghost", "User")).thenReturn(null);
         assertThrows(RuntimeException.class, () -> service.findByFirstNameAndLastName("Ghost", "User"));
 
-        when(patientRepository.findByFirstNameAndLastName("Jane", "Doe")).thenReturn(inactivePatient);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Jane", "Doe")).thenReturn(inactivePatient);
         assertThrows(RuntimeException.class, () -> service.findByFirstNameAndLastName("Jane", "Doe"));
     }
 
@@ -145,7 +145,7 @@ class PatientServiceTest {
 
     @Test
     void update_shouldPersistChanges_whenActive() {
-        when(patientRepository.findByFirstNameAndLastName("John", "Doe")).thenReturn(activePatient);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("John", "Doe")).thenReturn(activePatient);
         // mapper.updatePatient is void; we ensure it is invoked
         doAnswer(inv -> {
             PatientDTO pdto = inv.getArgument(0);
@@ -164,7 +164,7 @@ class PatientServiceTest {
 
         PatientDTO result = service.update(patch);
         assertNotNull(result);
-        verify(patientRepository).findByFirstNameAndLastName("John", "Doe");
+        verify(patientRepository).findByFirstNameAndLastNameAndActiveTrue("John", "Doe");
         verify(mapper).updatePatient(patch, activePatient);
         verify(patientRepository).save(activePatient);
         verify(mapper).toDTO(activePatient);
@@ -175,19 +175,19 @@ class PatientServiceTest {
         PatientDTO ghost = new PatientDTO();
         ghost.setFirstName("Ghost");
         ghost.setLastName("User");
-        when(patientRepository.findByFirstNameAndLastName("Ghost", "User")).thenReturn(null);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Ghost", "User")).thenReturn(null);
         assertThrows(RuntimeException.class, () -> service.update(ghost));
 
         PatientDTO jane = new PatientDTO();
         jane.setFirstName("Jane");
         jane.setLastName("Doe");
-        when(patientRepository.findByFirstNameAndLastName("Jane", "Doe")).thenReturn(inactivePatient);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Jane", "Doe")).thenReturn(inactivePatient);
         assertThrows(RuntimeException.class, () -> service.update(jane));
     }
 
     @Test
     void delete_shouldSoftDelete_whenActive() {
-        when(patientRepository.findByFirstNameAndLastName("John", "Doe")).thenReturn(activePatient);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("John", "Doe")).thenReturn(activePatient);
         when(patientRepository.save(any(Patient.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.delete("John", "Doe");
@@ -198,10 +198,10 @@ class PatientServiceTest {
 
     @Test
     void delete_shouldThrow_whenNotFoundOrInactive() {
-        when(patientRepository.findByFirstNameAndLastName("Ghost", "User")).thenReturn(null);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Ghost", "User")).thenReturn(null);
         assertThrows(RuntimeException.class, () -> service.delete("Ghost", "User"));
 
-        when(patientRepository.findByFirstNameAndLastName("Jane", "Doe")).thenReturn(inactivePatient);
+        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Jane", "Doe")).thenReturn(inactivePatient);
         assertThrows(RuntimeException.class, () -> service.delete("Jane", "Doe"));
     }
 }

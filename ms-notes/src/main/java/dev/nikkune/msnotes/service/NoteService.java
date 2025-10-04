@@ -42,8 +42,7 @@ public class NoteService implements INoteService {
      */
     public List<Note> list(String firstName, String lastName) {
         ensurePatientExists(firstName, lastName);
-        List<Note> allNotes = noteRepository.findByFirstNameAndLastNameOrderByCreatedAtDesc(firstName, lastName);
-        return allNotes.stream().filter(Note::getActive).toList();
+        return noteRepository.findByFirstNameAndLastNameAndActiveTrueOrderByUpdatedAtDesc(firstName, lastName);
     }
 
     /**
