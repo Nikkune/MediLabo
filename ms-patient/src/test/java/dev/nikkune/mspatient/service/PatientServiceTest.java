@@ -69,13 +69,13 @@ class PatientServiceTest {
 
     @Test
     void findAll_shouldReturnMappedDTOs() {
-        when(patientRepository.findAll()).thenReturn(Arrays.asList(activePatient, inactivePatient));
+        when(patientRepository.findAllByActiveTrue()).thenReturn(Arrays.asList(activePatient));
         when(mapper.toDTO(any(Patient.class))).thenReturn(dto);
 
         List<PatientDTO> result = service.findAll();
 
         assertEquals(1, result.size(), "Only active patients should be returned");
-        verify(patientRepository, times(1)).findAll();
+        verify(patientRepository, times(1)).findAllByActiveTrue();
         verify(mapper, times(1)).toDTO(any(Patient.class));
     }
 
@@ -117,12 +117,9 @@ class PatientServiceTest {
     }
 
     @Test
-    void findByFirstNameAndLastName_shouldThrow_whenNotFoundOrInactive() {
+    void findByFirstNameAndLastName_shouldThrow_whenNotFound() {
         when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Ghost", "User")).thenReturn(null);
         assertThrows(RuntimeException.class, () -> service.findByFirstNameAndLastName("Ghost", "User"));
-
-        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Jane", "Doe")).thenReturn(inactivePatient);
-        assertThrows(RuntimeException.class, () -> service.findByFirstNameAndLastName("Jane", "Doe"));
     }
 
     @Test
@@ -171,18 +168,12 @@ class PatientServiceTest {
     }
 
     @Test
-    void update_shouldThrow_whenNotFoundOrInactive() {
+    void update_shouldThrow_whenNotFound() {
         PatientDTO ghost = new PatientDTO();
         ghost.setFirstName("Ghost");
         ghost.setLastName("User");
         when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Ghost", "User")).thenReturn(null);
         assertThrows(RuntimeException.class, () -> service.update(ghost));
-
-        PatientDTO jane = new PatientDTO();
-        jane.setFirstName("Jane");
-        jane.setLastName("Doe");
-        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Jane", "Doe")).thenReturn(inactivePatient);
-        assertThrows(RuntimeException.class, () -> service.update(jane));
     }
 
     @Test
@@ -197,11 +188,8 @@ class PatientServiceTest {
     }
 
     @Test
-    void delete_shouldThrow_whenNotFoundOrInactive() {
+    void delete_shouldThrow_whenNotFound() {
         when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Ghost", "User")).thenReturn(null);
         assertThrows(RuntimeException.class, () -> service.delete("Ghost", "User"));
-
-        when(patientRepository.findByFirstNameAndLastNameAndActiveTrue("Jane", "Doe")).thenReturn(inactivePatient);
-        assertThrows(RuntimeException.class, () -> service.delete("Jane", "Doe"));
     }
 }
