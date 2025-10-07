@@ -4,10 +4,11 @@ import Home from "./pages/Home.tsx";
 import Patients from "./pages/Patients.tsx";
 import {Bounce, ToastContainer} from "react-toastify";
 import Notes from "./pages/Notes.tsx";
+import {Box} from "@mui/material";
 
 export default function App() {
     return (
-        <div>
+        <Box sx={{width: '100%', height: '100%', display: 'flex', flexDirection: 'column'}}>
             <Header/>
             <Routes>
                 <Route path="/" element={<Home/>}/>
@@ -27,6 +28,6 @@ export default function App() {
                 theme="colored"
                 transition={Bounce}
             />
-        </div>
+        </Box>
     )
 }

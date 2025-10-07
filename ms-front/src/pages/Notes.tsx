@@ -6,6 +6,7 @@ import type {Note} from "../data/Note.ts";
 import {formatDate} from "../utils/formatDate.ts";
 import {toast} from "react-toastify";
 import {type ApiError, del, get, post, put} from "../lib/apiCall.ts";
+import Loader from "../components/Loader.tsx";
 
 function isApiError(value: unknown): value is ApiError {
     return typeof value === 'object' && value !== null && 'success' in value && (value as { success?: unknown }).success === false;
@@ -17,6 +18,7 @@ export default function Notes() {
     const firstName = searchParams.get('firstName');
     const lastName = searchParams.get('lastName');
     const [notes, setNotes] = useState<Note[]>([]);
+    const [risk, setRisk] = useState("None")
     const [isLoading, setIsLoading] = useState(false);
 
     // Dialog states
@@ -48,6 +50,13 @@ export default function Notes() {
                 updatedAt: new Date(n.updatedAt),
             }));
             setNotes(mapped);
+            const riskRes = await get<string>("/risk", {firstName, lastName});
+            if (isApiError(riskRes)) {
+                toast.error(riskRes.message || 'Failed to fetch risk');
+                setRisk("None");
+                return;
+            }
+            setRisk(riskRes);
         } catch (error: unknown) {
             const msg = error instanceof Error ? error.message : 'Failed to fetch notes';
             toast.error(msg);
@@ -125,12 +134,32 @@ export default function Notes() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [firstName, lastName, navigate]);
 
+    let riskColor: "error" | "primary" | "secondary" | "info" | "success" | "warning" | "default";
+    switch (risk) {
+        case "In Danger":
+            riskColor = "error";
+            break;
+        case "Early onset":
+            riskColor = "warning";
+            break;
+        case "Borderline":
+            riskColor = "info";
+            break;
+        default:
+            riskColor = "success";
+    }
+
+    if (isLoading) {
+        return (
+            <Loader/>
+        )
+    }
     return (
         <Container>
             <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
                 <Stack direction="row" spacing={2} alignItems="center">
                     <Typography variant="h4">{`Notes for ${lastName} ${firstName}`}</Typography>
-                    <Chip label="Will be the risk" color="primary"/>
+                    <Chip label={risk} color={riskColor}/>
                 </Stack>
                 <Button startIcon={<Add/>} onClick={() => setCreateOpen(true)} disabled={isLoading}>Add a note</Button>
             </Box>
