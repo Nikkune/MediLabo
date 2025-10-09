@@ -2,7 +2,7 @@ package dev.nikkune.msrisk.service;
 
 import dev.nikkune.msrisk.client.NotesClient;
 import dev.nikkune.msrisk.client.PatientClient;
-import dev.nikkune.msrisk.dto.PatientDTO;
+import dev.nikkune.msrisk.dto.RiskDTO;
 import dev.nikkune.msrisk.model.RiskLevel;
 import dev.nikkune.msrisk.util.AgeCalculator;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class RiskService implements IRiskService {
 
     @Override
     public RiskLevel calculateRiskLevel(String firstName, String lastName) {
-        PatientDTO patient = patientClient.patient(firstName, lastName);
+        RiskDTO patient = patientClient.getPatientRiskInfo(firstName, lastName);
         int age = AgeCalculator.ageInYears(patient.getBirthDate());
         boolean isFemale = patient.getGender().equals("F");
         List<String> notes = notesClient.allPatientNotes(firstName, lastName);
@@ -40,8 +40,8 @@ public class RiskService implements IRiskService {
 
         if (triggerCount == 0) return RiskLevel.NONE;
 
-        if (age < 30){
-            if (isFemale){
+        if (age < 30) {
+            if (isFemale) {
                 if (triggerCount >= 7) return RiskLevel.EARLY_ONSET;
                 if (triggerCount >= 4) return RiskLevel.IN_DANGER;
             } else {
@@ -54,6 +54,6 @@ public class RiskService implements IRiskService {
             if (triggerCount >= 2) return RiskLevel.BORDERLINE;
         }
 
-        return RiskLevel.NONE;
+        return RiskLevel.NOT_APPLICABLE;
     }
 }

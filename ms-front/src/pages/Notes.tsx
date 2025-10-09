@@ -145,8 +145,11 @@ export default function Notes() {
         case "Borderline":
             riskColor = "info";
             break;
-        default:
+        case "None":
             riskColor = "success";
+            break
+        default:
+            riskColor = "default";
     }
 
     if (isLoading) {

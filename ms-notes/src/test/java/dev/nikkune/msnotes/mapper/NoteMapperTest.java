@@ -9,7 +9,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class NoteMapperTest {
 
@@ -32,8 +33,16 @@ public class NoteMapperTest {
 
     @Test
     public void toDtoList_mapsAll() {
-        Note n1 = new Note(); n1.setFirstName("A"); n1.setLastName("B"); n1.setNote("1"); n1.setCreatedAt(new Date());
-        Note n2 = new Note(); n2.setFirstName("C"); n2.setLastName("D"); n2.setNote("2"); n2.setCreatedAt(new Date());
+        Note n1 = new Note();
+        n1.setFirstName("A");
+        n1.setLastName("B");
+        n1.setNote("1");
+        n1.setCreatedAt(new Date());
+        Note n2 = new Note();
+        n2.setFirstName("C");
+        n2.setLastName("D");
+        n2.setNote("2");
+        n2.setCreatedAt(new Date());
         List<NoteDTO> dtos = mapper.toDtoList(Arrays.asList(n1, n2));
         assertEquals(2, dtos.size());
         assertEquals("1", dtos.get(0).getNote());

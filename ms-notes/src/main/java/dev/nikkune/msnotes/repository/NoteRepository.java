@@ -16,7 +16,7 @@ public interface NoteRepository extends MongoRepository<Note, String> {
      * The results are sorted in descending order based on the {@code updatedAt} timestamp.
      *
      * @param firstName the first name of the patient to filter the notes by
-     * @param lastName the last name of the patient to filter the notes by
+     * @param lastName  the last name of the patient to filter the notes by
      * @return a list of active {@code Note} objects matching the specified first name and last name,
      * sorted by the most recently updated first
      */

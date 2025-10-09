@@ -38,18 +38,24 @@ public class MongoConfig {
     @Bean
     public MongoClient mongoClient() throws Exception {
         TrustManager[] trustAllCerts = new TrustManager[]{
-            new X509TrustManager() {
-                public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-            }
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
         };
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
 
         String uri = String.format(
-            "mongodb://%s:%s@%s:%d/%s?authSource=%s&tls=true&tlsAllowInvalidCertificates=true&tlsInsecure=true",
-            username, password, host, port, database, authDatabase
+                "mongodb://%s:%s@%s:%d/%s?authSource=%s&tls=true&tlsAllowInvalidCertificates=true&tlsInsecure=true",
+                username, password, host, port, database, authDatabase
         );
 
         ConnectionString connectionString = new ConnectionString(uri);

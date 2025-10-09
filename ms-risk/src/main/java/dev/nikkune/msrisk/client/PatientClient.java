@@ -1,6 +1,6 @@
 package dev.nikkune.msrisk.client;
 
-import dev.nikkune.msrisk.dto.PatientDTO;
+import dev.nikkune.msrisk.dto.RiskDTO;
 import dev.nikkune.msrisk.exception.PatientNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,7 +13,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Date;
 
 /**
  * Client class for interacting with the Patient microservice. This class provides
@@ -32,7 +31,7 @@ public class PatientClient {
      * Constructs a PatientClient instance for interacting with the Patient microservice.
      * It initializes the base URL, authentication header, and REST client for making API requests.
      *
-     * @param baseUrl the base URL of the Patient microservice, loaded from application properties.
+     * @param baseUrl  the base URL of the Patient microservice, loaded from application properties.
      * @param username the username for Basic authentication with the Patient microservice. Defaults to "medilabo".
      * @param password the password for Basic authentication with the Patient microservice. Defaults to "medilabo123".
      */
@@ -51,19 +50,19 @@ public class PatientClient {
         this.restClient = RestClient.create();
     }
 
-    public PatientDTO patient(String firstName, String lastName) {
-        String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
+    public RiskDTO getPatientRiskInfo(String firstName, String lastName) {
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/riskInfo")
                 .queryParam("firstName", firstName)
                 .queryParam("lastName", lastName)
                 .toUriString();
         try {
-            ResponseEntity<PatientDTO> response = restClient.get()
+            ResponseEntity<RiskDTO> response = restClient.get()
                     .uri(url)
                     .header("Authorization", authHeader)
                     .retrieve()
-                    .toEntity(PatientDTO.class);
+                    .toEntity(RiskDTO.class);
 
-            PatientDTO patient = response.getBody();
+            RiskDTO patient = response.getBody();
             if (patient == null) {
                 logger.error("Patient not found for {} {}", firstName, lastName);
                 throw new PatientNotFoundException(firstName, lastName);

@@ -1,6 +1,7 @@
 package dev.nikkune.mspatient.mapper;
 
 import dev.nikkune.mspatient.dto.PatientDTO;
+import dev.nikkune.mspatient.dto.RiskDTO;
 import dev.nikkune.mspatient.model.Patient;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
@@ -25,6 +26,8 @@ public interface PatientMapper {
     Patient toPatient(PatientDTO patientDTO);
 
     PatientDTO toDTO(Patient patient);
+
+    RiskDTO toRiskDTO(Patient patient);
 
     /**
      * Updates the fields of an existing Patient entity with the provided

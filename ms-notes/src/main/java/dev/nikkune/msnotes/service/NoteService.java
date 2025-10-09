@@ -24,7 +24,7 @@ public class NoteService implements INoteService {
      * Constructs a new instance of NoteService.
      *
      * @param noteRepository the repository used for managing note persistence
-     * @param patientClient the client used to interact with the patient microservice
+     * @param patientClient  the client used to interact with the patient microservice
      */
     public NoteService(NoteRepository noteRepository, PatientClient patientClient) {
         this.noteRepository = noteRepository;
@@ -36,7 +36,7 @@ public class NoteService implements INoteService {
      * and sorted in descending order based on creation time.
      *
      * @param firstName the first name of the patient
-     * @param lastName the last name of the patient
+     * @param lastName  the last name of the patient
      * @return a list of active notes for the specified patient
      * @throws PatientNotFoundException if the patient does not exist
      */
@@ -50,8 +50,8 @@ public class NoteService implements INoteService {
      * The note is saved with the current timestamp for creation and update time.
      *
      * @param firstName the first name of the patient associated with the note
-     * @param lastName the last name of the patient associated with the note
-     * @param noteText the content of the note to be added
+     * @param lastName  the last name of the patient associated with the note
+     * @param noteText  the content of the note to be added
      * @return the saved {@code Note} object
      */
     public Note add(String firstName, String lastName, String noteText) {
@@ -86,7 +86,7 @@ public class NoteService implements INoteService {
      * Updates the text of an existing note identified by its ID and sets the updated timestamp.
      * The note must be active; otherwise, a {@link NoteNotFoundException} is thrown.
      *
-     * @param id the unique identifier of the note to be updated
+     * @param id       the unique identifier of the note to be updated
      * @param noteText the new text content for the note
      * @return the updated {@link Note} after saving changes to the repository
      * @throws NoteNotFoundException if the note with the provided ID does not exist or is inactive

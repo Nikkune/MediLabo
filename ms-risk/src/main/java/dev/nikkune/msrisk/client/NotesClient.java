@@ -32,7 +32,7 @@ public class NotesClient {
      * Constructs a NotesClient instance for interacting with the Notes microservice.
      * It initializes the base URL, authentication header, and REST client for making API requests.
      *
-     * @param baseUrl the base URL of the Notes microservice, loaded from application properties.
+     * @param baseUrl  the base URL of the Notes microservice, loaded from application properties.
      * @param username the username for Basic authentication with the Notes microservice. Defaults to "medilabo".
      * @param password the password for Basic authentication with the Notes microservice. Defaults to "medilabo123".
      */
@@ -61,7 +61,8 @@ public class NotesClient {
                     .uri(url)
                     .header("Authorization", authHeader)
                     .retrieve()
-                    .toEntity(new ParameterizedTypeReference<List<NoteDTO>>() {});
+                    .toEntity(new ParameterizedTypeReference<List<NoteDTO>>() {
+                    });
 
             List<NoteDTO> notes = response.getBody();
             if (notes == null) {

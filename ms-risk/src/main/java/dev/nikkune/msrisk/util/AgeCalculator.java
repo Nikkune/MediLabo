@@ -8,18 +8,18 @@ import java.util.Date;
 import java.util.Objects;
 
 public class AgeCalculator {
-    private static LocalDate toLocalDate(Date date, ZoneId zoneId){
+    private static LocalDate toLocalDate(Date date, ZoneId zoneId) {
         Objects.requireNonNull(date, "date must not be null");
         Objects.requireNonNull(zoneId, "zoneId must not be null");
         Instant instant = date.toInstant();
         return instant.atZone(zoneId).toLocalDate();
     }
 
-    public static int ageInYears(Date birthDate){
+    public static int ageInYears(Date birthDate) {
         return ageInYears(birthDate, ZoneId.systemDefault());
     }
 
-    public static int ageInYears(Date birthDate, ZoneId zoneId){
+    public static int ageInYears(Date birthDate, ZoneId zoneId) {
         LocalDate birth = toLocalDate(birthDate, zoneId);
         LocalDate today = LocalDate.now(zoneId);
         if (!birth.isBefore(today)) return 0;

@@ -29,7 +29,7 @@ public class PatientClient {
      * Constructs a PatientClient instance for interacting with the Patient microservice.
      * It initializes the base URL, authentication header, and REST client for making API requests.
      *
-     * @param baseUrl the base URL of the Patient microservice, loaded from application properties.
+     * @param baseUrl  the base URL of the Patient microservice, loaded from application properties.
      * @param username the username for Basic authentication with the Patient microservice. Defaults to "medilabo".
      * @param password the password for Basic authentication with the Patient microservice. Defaults to "medilabo123".
      */
@@ -53,9 +53,9 @@ public class PatientClient {
      * to the patient service API.
      *
      * @param firstName the first name of the patient to check
-     * @param lastName the last name of the patient to check
+     * @param lastName  the last name of the patient to check
      * @return true if the patient exists and the request is successful; false if the
-     *         patient is not found. Throws an exception in case of other errors.
+     * patient is not found. Throws an exception in case of other errors.
      */
     public boolean exists(String firstName, String lastName) {
         String url = UriComponentsBuilder.fromHttpUrl(baseUrl)

@@ -1,6 +1,7 @@
 package dev.nikkune.mspatient.controller;
 
 import dev.nikkune.mspatient.dto.PatientDTO;
+import dev.nikkune.mspatient.dto.RiskDTO;
 import dev.nikkune.mspatient.model.Patient;
 import dev.nikkune.mspatient.service.IPatientService;
 import dev.nikkune.mspatient.validation.ValidationGroups;
@@ -74,6 +75,14 @@ public class PatientController {
         PatientDTO patient = patientService.findByFirstNameAndLastName(firstName, lastName);
         logger.info("Retrieved patient with first name {} and last name {}", firstName, lastName);
         return patient;
+    }
+
+    @GetMapping("/riskInfo")
+    public RiskDTO getPatientRiskInfo(@RequestParam @Valid String firstName, @RequestParam @Valid String lastName) {
+        logger.debug("Received request to get rist info of patient with first name {} and last name {}", firstName, lastName);
+        RiskDTO riskInfo = patientService.getRiskInfo(firstName, lastName);
+        logger.info("Retrieved birth rist info of patient with first name {} and last name {}", firstName, lastName);
+        return riskInfo;
     }
 
     /**

@@ -14,5 +14,6 @@ import java.util.List;
  */
 public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaSpecificationExecutor<Patient> {
     List<Patient> findAllByActiveTrue();
+
     Patient findByFirstNameAndLastNameAndActiveTrue(String firstName, String lastName);
 }

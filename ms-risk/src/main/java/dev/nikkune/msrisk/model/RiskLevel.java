@@ -1,6 +1,7 @@
 package dev.nikkune.msrisk.model;
 
 public enum RiskLevel {
+    NOT_APPLICABLE("Not Applicable"),
     NONE("None"),
     BORDERLINE("Borderline"),
     IN_DANGER("In Danger"),

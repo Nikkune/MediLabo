@@ -1,6 +1,7 @@
 package dev.nikkune.mspatient.service;
 
 import dev.nikkune.mspatient.dto.PatientDTO;
+import dev.nikkune.mspatient.dto.RiskDTO;
 import dev.nikkune.mspatient.mapper.PatientMapper;
 import dev.nikkune.mspatient.model.Patient;
 import dev.nikkune.mspatient.repository.PatientRepository;
@@ -63,6 +64,14 @@ public class PatientService implements IPatientService {
         if (patient == null)
             throw new RuntimeException("Patient with first name " + firstName + " and last name " + lastName + " does not exist");
         return mapper.toDTO(patient);
+    }
+
+    @Override
+    public RiskDTO getRiskInfo(String firstName, String lastName) {
+        Patient patient = patientRepository.findByFirstNameAndLastNameAndActiveTrue(firstName, lastName);
+        if (patient == null)
+            throw new RuntimeException("Patient with first name " + firstName + " and last name " + lastName + " does not exist");
+        return mapper.toRiskDTO(patient);
     }
 
     /**

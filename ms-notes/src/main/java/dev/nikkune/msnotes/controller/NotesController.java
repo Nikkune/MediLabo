@@ -8,7 +8,6 @@ import dev.nikkune.msnotes.model.Note;
 import dev.nikkune.msnotes.service.INoteService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +29,7 @@ public class NotesController {
      * Constructs a NotesController instance with the required dependencies.
      *
      * @param noteService the service responsible for note management operations
-     * @param mapper the mapper to convert between Note and NoteDTO objects
+     * @param mapper      the mapper to convert between Note and NoteDTO objects
      */
     public NotesController(INoteService noteService, NoteMapper mapper) {
         this.noteService = noteService;
@@ -41,12 +40,12 @@ public class NotesController {
      * Retrieves a list of notes associated with the specified first name and last name.
      *
      * @param firstName the first name of the user to filter notes, must not be blank
-     * @param lastName the last name of the user to filter notes, must not be blank
+     * @param lastName  the last name of the user to filter notes, must not be blank
      * @return a list of NoteDTO objects containing the filtered notes
      */
     @GetMapping
     public List<NoteDTO> getNotes(@RequestParam @NotBlank String firstName,
-                               @RequestParam @NotBlank String lastName) {
+                                  @RequestParam @NotBlank String lastName) {
         List<Note> notes = noteService.list(firstName, lastName);
         return mapper.toDtoList(notes);
     }
@@ -79,7 +78,7 @@ public class NotesController {
     /**
      * Updates the content of an existing note based on the provided ID and request data.
      *
-     * @param id the unique identifier of the note to be updated
+     * @param id      the unique identifier of the note to be updated
      * @param request the data used to update the note, including the updated note text
      * @return a representation of the updated note in the form of a NoteDTO
      */

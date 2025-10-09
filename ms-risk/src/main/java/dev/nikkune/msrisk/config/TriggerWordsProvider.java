@@ -21,8 +21,9 @@ public class TriggerWordsProvider {
             }
 
             ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(is, new TypeReference<List<String>>() {});
-        } catch (IOException e){
+            return mapper.readValue(is, new TypeReference<List<String>>() {
+            });
+        } catch (IOException e) {
             throw new RuntimeException("Failed to read trigger words file", e);
         }
     }
