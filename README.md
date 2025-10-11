@@ -66,198 +66,219 @@ Les Dockerfiles sont déjà fournis pour chaque microservice. Un répertoire d'i
 Le script s'exécute automatiquement si vous montez le dossier sur `/docker-entrypoint-initdb.d` du conteneur MongoDB.
 
 
-### Manuellement (sans Docker Compose)
-#### 1) Construire les images
+### Lancement sans Compose
 
-Exécutez depuis la racine du projet (PowerShell ou bash) :
+Lancez toute la stack avec de simples commandes `docker` (sans Docker Compose), en suivant la même configuration que `docker-compose.yml`.
+
+Important: Cette section suppose que vous souhaitez tout lancer en conteneurs, mais sans `docker compose`. Si vous voulez tout lancer sans Docker, utilisez la section « Installation manuelle (sans Docker / sans Compose) » plus bas.
+
+### 1) Prérequis logiciels
+- Docker Engine / Docker Desktop récent
+- PowerShell (Windows) ou un shell équivalent
+
+### 2) Réseau et volumes Docker
+Exécutez ces commandes une seule fois (elles sont idempotentes) :
 
 ```powershell
-# À la racine du repo
-docker build -t medilabo/ms-eureka .\ms-eureka
-docker build -t medilabo/ms-gateway .\ms-gateway
-docker build -t medilabo/ms-patient .\ms-patient
-docker build -t medilabo/ms-notes .\ms-notes
-docker build -t medilabo/ms-risk .\ms-risk
-docker build -t medilabo/ms-front .\ms-front
+# Réseau dédié (pour que les conteneurs se résolvent par leurs noms)
+if (-not (docker network ls --format '{{.Name}}' | Select-String -SimpleMatch 'medilabo-net')) { docker network create medilabo-net }
+
+# Volumes de données persistantes
+if (-not (docker volume ls --format '{{.Name}}' | Select-String -SimpleMatch 'mongo-data')) { docker volume create mongo-data }
+if (-not (docker volume ls --format '{{.Name}}' | Select-String -SimpleMatch 'mysql-data')) { docker volume create mysql-data }
 ```
 
-#### 2) Créer un réseau Docker dédié
+### 3) Build des images
+Depuis la racine du dépôt :
 
 ```powershell
-docker network create medilabo-net
+# Backend Spring Boot
+docker build -t medilabo/ms-eureka:local   ./ms-eureka
+docker build -t medilabo/ms-gateway:local  ./ms-gateway
+docker build -t medilabo/ms-patient:local  ./ms-patient
+docker build -t medilabo/ms-notes:local    ./ms-notes
+docker build -t medilabo/ms-risk:local     ./ms-risk
+
+# Frontend (Nginx)
+docker build -t medilabo/ms-front:local    ./ms-front
 ```
 
-#### 3) Lancer MongoDB avec initialisation
+### 4) Lancement des bases de données
+Lancez d’abord MongoDB et MySQL pour que les microservices puissent s’y connecter.
 
 ```powershell
-docker run -d --name mongo `
-  --network medilabo-net `
-  -p 27017:27017 `
-  -e MONGO_INITDB_ROOT_USERNAME=root `
-  -e MONGO_INITDB_ROOT_PASSWORD=example `
-  -v ${PWD}\docker\mongo-init:/docker-entrypoint-initdb.d:ro `
-  mongo:7
+# MongoDB (avec seed automatique depuis docker/mongo-init)
+docker run -d --name mongo --network medilabo-net -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=example -e MONGO_DB_NAME=notesdb -e MONGO_COLLECTION=notes -v "${PWD}.Path\docker\mongo-init:/docker-entrypoint-initdb.d:ro" -v mongo-data:/data/db mongo:7
+
+# MySQL
+docker run -d --name mysql --network medilabo-net -p 3306:3306 -e MYSQL_DATABASE=medilabo_data_store -e MYSQL_USER=medilabo -e MYSQL_PASSWORD=medilabo -e MYSQL_ROOT_PASSWORD=example -v mysql-data:/var/lib/mysql mysql:8.4
 ```
 
-Notes :
-- Par défaut, le script importe `docker/mongo-init/data.json` dans la base `notesdb`, collection `notes`.
-- Vous pouvez surcharger via variables d'env : `MONGO_DB_NAME` et `MONGO_COLLECTION`.
-
-#### 4) Lancer Eureka
+Astuce: patientez quelques secondes pour laisser MySQL/MongoDB démarrer complètement. Vous pouvez vérifier les logs :
 
 ```powershell
-docker run -d --name ms-eureka `
-  --network medilabo-net `
-  -p 8761:8761 `
-  medilabo/ms-eureka
+docker logs -f --tail=100 mysql
+# ou
+docker logs -f --tail=100 mongo
 ```
 
-Vérifiez le dashboard : http://localhost:8761
-
-#### 5) Lancer les microservices Spring Boot
-
-Adaptez les variables d'environnement de vos applications si nécessaire (URL BDD, Eureka, etc.). Exemple générique :
+### 5) Lancement des microservices
+Dans l’ordre recommandé :
 
 ```powershell
-# Gateway
-docker run -d --name ms-gateway `
-  --network medilabo-net `
-  -p 8080:8080 `
-  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka `
-  medilabo/ms-gateway
+# 1) Eureka
+docker run -d --name ms-eureka --network medilabo-net -p 8761:8761 medilabo/ms-eureka:local
 
-# Patient
-docker run -d --name ms-patient `
-  --network medilabo-net `
-  -p 8081:8081 `
-  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka `
-  medilabo/ms-patient
+# 2) Gateway (après Eureka)
+docker run -d --name ms-gateway --network medilabo-net -p 8080:8080 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER medilabo/ms-gateway:local
 
-# Notes (MongoDB)
-docker run -d --name ms-notes `
-  --network medilabo-net `
-  -p 8082:8082 `
-  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka `
-  -e SPRING_DATA_MONGODB_URI=mongodb://root:example@mongo:27017/notesdb?authSource=admin `
-  medilabo/ms-notes
+# 3) Patient (après MySQL + Eureka)
+docker run -d --name ms-patient --network medilabo-net -p 8081:8081 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/medilabo_data_store -e SPRING_DATASOURCE_USERNAME=medilabo -e SPRING_DATASOURCE_PASSWORD=medilabo -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER medilabo/ms-patient:local
 
-# Risk
-docker run -d --name ms-risk `
-  --network medilabo-net `
-  -p 8083:8083 `
-  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka `
-  medilabo/ms-risk
+# 4) Notes (après MongoDB + Eureka)
+docker run -d --name ms-notes --network medilabo-net -p 8082:8082 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_DATA_MONGODB_HOST=mongo -e SPRING_DATA_MONGODB_PORT=27017 -e SPRING_DATA_MONGODB_DATABASE=notesdb -e SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin -e SPRING_DATA_MONGODB_USERNAME=root -e SPRING_DATA_MONGODB_PASSWORD=example -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER -e MS_PATIENT_BASEURL=http://ms-gateway:8080/patient -e MS_PATIENT_USERNAME=medilabo -e MS_PATIENT_PASSWORD=medilabo123 medilabo/ms-notes:local
+
+# 5) Risk (après Gateway)
+docker run -d --name ms-risk --network medilabo-net -p 8083:8083 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER -e MS_PATIENT_BASEURL=http://ms-gateway:8080/patient -e MS_PATIENT_USERNAME=medilabo -e MS_PATIENT_PASSWORD=medilabo123 -e MS_NOTES_BASEURL=http://ms-gateway:8080/notes -e MS_NOTES_USERNAME=medilabo -e MS_NOTES_PASSWORD=medilabo123 medilabo/ms-risk:local
 ```
 
-Remarques :
-- Assurez-vous que les propriétés `application.yml/properties` correspondent (ex. SPRING_DATA_MONGODB_URI pour ms-notes, URL MySQL si ms-patient utilise MySQL, etc.).
-- Les variables d'env Spring Boot peuvent être passées en mode `SPRING_...` (remplacez les points par des underscores).
-
-#### 6) Lancer le frontend (Nginx)
+### 6) Lancement du frontend (Nginx)
+Après que la gateway soit en ligne :
 
 ```powershell
-docker run -d --name ms-front `
-  --network medilabo-net `
-  -p 80:80 `
-  medilabo/ms-front
+docker run -d --name ms-front --network medilabo-net -p 80:80 medilabo/ms-front:local
 ```
 
-Frontend : http://localhost
+### 7) Vérification
+- Eureka : http://localhost:8761 doit afficher les services.
+- API Gateway : http://localhost:8080/patient et http://localhost:8080/notes
+- Frontend : http://localhost/ (selon votre config Nginx et routes)
+- Logs : `docker logs -f <container>` pour diagnostiquer un service.
 
-#### Vérification rapide
-
-- Eureka : http://localhost:8761 — les services devraient s’enregistrer progressivement.
-- Frontend : http://localhost — l’application web doit être accessible.
-- API via Gateway : http://localhost:8080
-
-#### Arrêt et nettoyage
+### 8) Clean-up
+Arrêtez et supprimez tous les conteneurs, conservez les volumes (ou pas) :
 
 ```powershell
-docker stop ms-front ms-risk ms-notes ms-patient ms-gateway ms-eureka mongo
+# Arrêt
+docker stop ms-front ms-risk ms-notes ms-patient ms-gateway ms-eureka mysql mongo
 
-docker rm ms-front ms-risk ms-notes ms-patient ms-gateway ms-eureka mongo
+# Suppression
+docker rm   ms-front ms-risk ms-notes ms-patient ms-gateway ms-eureka mysql mongo
 
+# (Optionnel) supprimer les volumes de données
+docker volume rm mongo-data mysql-data
+
+# (Optionnel) supprimer le réseau dédié
 docker network rm medilabo-net
 ```
 
+## Installation manuelle (sans Docker / sans Compose)
 
-## Installation manuelle (sans Docker)
+Ce mode est utile pour le développement local, le débogage fin ou lorsque Docker n’est pas disponible. Les étapes ci‑dessous reprennent la logique du docker-compose (mêmes ports, même nom de base de données) afin de rester cohérent.
 
-Cette approche est utile en développement local.
+Important: vous devez créer des fichiers database.properties pour ms-notes et ms-patient (voir étape 2.2).
 
-### 1) Démarrer MongoDB localement et importer les données
+### 1) Prérequis logiciels
+- Java 21 + Maven 3.9+
+- Node.js 22.x + npm
+- MongoDB 6.x+ installé localement OU un accès à une instance distante
+- MySQL 8.x installé localement OU un accès à une instance distante
+- Accès réseau aux ports locaux suivants par défaut: 8761, 8080, 8081, 8082, 8083
 
-- Démarrez votre serveur MongoDB (local ou via un conteneur). Exemple via conteneur :
+### 2) Installations et configuration des bases de données
 
-```powershell
-docker run -d --name mongo-dev -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=example mongo:7
+#### 2.1) Création et initialisation
+- MySQL
+  1. Démarrez MySQL et connectez‑vous comme administrateur.
+  2. Créez une base et (optionnellement) un utilisateur dédié:
+     - CREATE DATABASE medilabo_data_store CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+     - CREATE USER 'medilabo'@'%' IDENTIFIED BY 'mot_de_passe_fort';
+     - GRANT ALL PRIVILEGES ON medilabo_data_store.* TO 'medilabo'@'%';
+     - FLUSH PRIVILEGES;
+  3. Note: ms-patient peut créer le schéma au démarrage (ddl-auto create-drop en dev).
+
+- MongoDB
+  1. Démarrez MongoDB et assurez‑vous que l’authentification est configurée selon votre besoin.
+  2. (Optionnel) Créez un utilisateur sur la base medilabo_data_store avec le rôle readWrite.
+  3. (Optionnel) Import de données d’exemple avec mongoimport (reprend la logique du dossier docker/mongo-init/) :
+     - mongoimport --host <host> --port <port> --username <user> --password <pass> --authenticationDatabase <authDb> --db medilabo_data_store --collection notes --jsonArray --file docker/mongo-init/data.json
+
+#### 2.2) Fichiers database.properties à créer
+Créez les fichiers suivants avec ces contenus exacts, puis renseignez les valeurs selon votre environnement.
+
+- ms-notes/src/main/resources/database.properties
+
+  Contenu:
+```properties
+# MongoDB host/port
+spring.data.mongodb.host=
+spring.data.mongodb.port=
+# Base de données principale
+spring.data.mongodb.database=
+# Authentification
+spring.data.mongodb.username=
+spring.data.mongodb.password=
+spring.data.mongodb.authentication-database=
 ```
 
-- Importez les données `data.json` :
+- ms-patient/src/main/resources/database.properties
 
-```powershell
-mongoimport `
-  --username root `
-  --password example `
-  --authenticationDatabase admin `
-  --db notesdb `
-  --collection notes `
-  --file .\docker\mongo-init\data.json `
-  --jsonArray `
-  --drop
+  Contenu:
+```properties
+spring.datasource.url=jdbc:mysql://host:port/database
+spring.datasource.username=
+spring.datasource.password=
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.show-sql=true
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
 ```
 
-Ajustez la chaîne de connexion Mongo dans `ms-notes` si nécessaire, par exemple :
-- SPRING_DATA_MONGODB_URI=mongodb://root:example@localhost:27017/notesdb?authSource=admin
+Remarques:
+- Ces fichiers sont importés par Spring via spring.config.import défini dans application.properties de chaque service.
+- Ne versionnez pas des mots de passe réels. Utilisez des variables d’environnement/secrets si nécessaire.
 
-### 2) Lancer les microservices Spring Boot
+### 3) Lancement des services (ordre recommandé)
+Dans des terminaux séparés, à la racine de chaque microservice:
 
-Depuis chaque dossier de service :
+1. ms-eureka
+   - mvn -q -DskipTests package
+   - java -jar target/*.jar
+   - Vérifiez http://localhost:8761
 
-```powershell
-# Exemple pour ms-eureka
-cd .\ms-eureka
-mvn spring-boot:run
+2. ms-patient (dépend de MySQL)
+   - Vérifiez ms-patient/src/main/resources/database.properties
+   - mvn -q -DskipTests spring-boot:run
+   - Le service écoute sur http://localhost:8081
 
-# Dans d'autres terminaux :
-cd ..\ms-gateway; mvn spring-boot:run
-cd ..\ms-patient; mvn spring-boot:run
-cd ..\ms-notes; mvn spring-boot:run
-cd ..\ms-risk; mvn spring-boot:run
-```
+3. ms-notes (dépend de MongoDB et de ms-patient/gateway pour certains appels)
+   - Vérifiez ms-notes/src/main/resources/database.properties
+   - mvn -q -DskipTests spring-boot:run
+   - Le service écoute sur http://localhost:8082
 
-- Si Eureka est activé côté clients, configurez `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka`.
-- Pour `ms-notes`, configurez la connexion Mongo (ex. `SPRING_DATA_MONGODB_URI` ci‑dessus) ou via `application.yml`.
+4. ms-risk
+   - mvn -q -DskipTests spring-boot:run
+   - Écoute sur http://localhost:8083
 
-### 3) Lancer le frontend en mode dev
+5. ms-gateway (dépend d’Eureka et des services)
+   - mvn -q -DskipTests spring-boot:run
+   - API Gateway sur http://localhost:8080
 
-```powershell
-cd .\ms-front
-npm ci
-npm run dev
-```
+Astuce: vous pouvez aussi builder une fois tous les JARs avec mvn -q -DskipTests package à la racine de chaque module puis lancer avec java -jar target/xxx.jar.
 
-Accédez à l’URL affichée par Vite (par défaut http://localhost:5173).
+### 4) Lancement du frontend
+- Aller dans ms-front
+- npm install
+- npm run dev
+- Ouvrir l’URL de développement affichée (souvent http://localhost:5173). La configuration de proxy Vite doit pointer vers la gateway (http://localhost:8080) si utilisée.
 
-Pour une build de prod locale :
+### 5) Vérification
+- Eureka: http://localhost:8761 liste les services enregistrés.
+- API Gateway: http://localhost:8080/patient et /notes doivent répondre (selon vos routes configurées).
+- Logs: surveillez les terminaux pour d’éventuelles erreurs de connexion à MySQL/MongoDB.
 
-```powershell
-npm run build
-npx serve .\dist
-```
-
-
-## Dépannage
-
-- Les services ne s’affichent pas dans Eureka : vérifiez la variable `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` et la connectivité réseau.
-- `ms-notes` ne démarre pas : assurez-vous que MongoDB est accessible et que `SPRING_DATA_MONGODB_URI` est correctement défini.
-- Conflits de ports : changez les ports mappés `-p` côté Docker ou les ports des services.
-- Logs d’un service Docker :
-
-```powershell
-docker logs -f ms-gateway
-```
-
+### 6) Clean‑up
+- Arrêtez les processus (Ctrl+C) dans chaque terminal.
+- Facultatif: supprimez/arrêtez vos services MySQL/MongoDB locaux si lancés pour les tests.
 
 ## Structure utile du dépôt
 
