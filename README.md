@@ -11,16 +11,6 @@ Ce dépôt contient une architecture microservices pour l'application MediLabo 
 
 Les instructions ci‑dessous détaillent l'installation via Docker (recommandée) et une exécution manuelle (sans Docker) pour le développement local.
 
-
-## Prérequis
-
-- Docker Desktop 4.x ou Docker Engine récent
-- (Optionnel) Docker Compose v2
-- Java 21 (Temurin/Adoptium) et Maven 3.9+ si vous lancez les services manuellement
-- Node.js 22.x et npm si vous lancez le frontend manuellement
-- Accès réseau aux ports utilisés : 80, 8080–8083, 8761 (par défaut)
-
-
 ## Aperçu des ports par défaut
 
 - ms-eureka : 8761 (tableau de bord Eureka)
@@ -38,18 +28,27 @@ Ajustez au besoin si vos configurations d'application diffèrent.
 
 ### Lancement en une commande (Docker Compose) (recommandé)
 
+#### Prérequis logiciels
+- Docker / Docker Desktop récent
+- Docker Compose
+- PowerShell (Windows) ou un shell équivalent
+
 Pour tout lancer automatiquement dans le bon ordre (bases de données, Eureka, microservices, frontend) et attendre la disponibilité des dépendances critiques, utilisez Docker Compose.
 
-Commandes principales (à la racine du projet) :
+Commandes (à la racine du projet) :
 
+Pour construire et lancer l'application :
 ```powershell
-# Build + run en arrière-plan
 docker compose up -d --build
+```
 
-# Suivre les logs si besoin
+Pour suivre les logs si besion :
+```powershell
 docker compose logs -f --tail=100
+```
 
-# Arrêter et supprimer les conteneurs du compose
+Pour arrêter et supprimer les conteneurs de l'application :
+```powershell
 docker compose down
 ```
 
@@ -72,11 +71,11 @@ Lancez toute la stack avec de simples commandes `docker` (sans Docker Compose), 
 
 Important: Cette section suppose que vous souhaitez tout lancer en conteneurs, mais sans `docker compose`. Si vous voulez tout lancer sans Docker, utilisez la section « Installation manuelle (sans Docker / sans Compose) » plus bas.
 
-### 1) Prérequis logiciels
+#### 1) Prérequis logiciels
 - Docker Engine / Docker Desktop récent
 - PowerShell (Windows) ou un shell équivalent
 
-### 2) Réseau et volumes Docker
+#### 2) Réseau et volumes Docker
 Exécutez ces commandes une seule fois (elles sont idempotentes) :
 
 ```powershell
@@ -88,7 +87,7 @@ if (-not (docker volume ls --format '{{.Name}}' | Select-String -SimpleMatch 'mo
 if (-not (docker volume ls --format '{{.Name}}' | Select-String -SimpleMatch 'mysql-data')) { docker volume create mysql-data }
 ```
 
-### 3) Build des images
+#### 3) Build des images
 Depuis la racine du dépôt :
 
 ```powershell
@@ -103,7 +102,7 @@ docker build -t medilabo/ms-risk:local     ./ms-risk
 docker build -t medilabo/ms-front:local    ./ms-front
 ```
 
-### 4) Lancement des bases de données
+#### 4) Lancement des bases de données
 Lancez d’abord MongoDB et MySQL pour que les microservices puissent s’y connecter.
 
 ```powershell
@@ -122,7 +121,7 @@ docker logs -f --tail=100 mysql
 docker logs -f --tail=100 mongo
 ```
 
-### 5) Lancement des microservices
+#### 5) Lancement des microservices
 Dans l’ordre recommandé :
 
 ```powershell
@@ -142,20 +141,20 @@ docker run -d --name ms-notes --network medilabo-net -p 8082:8082 -e EUREKA_CLIE
 docker run -d --name ms-risk --network medilabo-net -p 8083:8083 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER -e MS_PATIENT_BASEURL=http://ms-gateway:8080/patient -e MS_PATIENT_USERNAME=medilabo -e MS_PATIENT_PASSWORD=medilabo123 -e MS_NOTES_BASEURL=http://ms-gateway:8080/notes -e MS_NOTES_USERNAME=medilabo -e MS_NOTES_PASSWORD=medilabo123 medilabo/ms-risk:local
 ```
 
-### 6) Lancement du frontend (Nginx)
+#### 6) Lancement du frontend (Nginx)
 Après que la gateway soit en ligne :
 
 ```powershell
 docker run -d --name ms-front --network medilabo-net -p 80:80 medilabo/ms-front:local
 ```
 
-### 7) Vérification
+#### 7) Vérification
 - Eureka : http://localhost:8761 doit afficher les services.
 - API Gateway : http://localhost:8080/patient et http://localhost:8080/notes
 - Frontend : http://localhost/ (selon votre config Nginx et routes)
 - Logs : `docker logs -f <container>` pour diagnostiquer un service.
 
-### 8) Clean-up
+#### 8) Clean-up
 Arrêtez et supprimez tous les conteneurs, conservez les volumes (ou pas) :
 
 ```powershell
@@ -191,17 +190,44 @@ Important: vous devez créer des fichiers database.properties pour ms-notes et m
 - MySQL
   1. Démarrez MySQL et connectez‑vous comme administrateur.
   2. Créez une base et (optionnellement) un utilisateur dédié:
-     - CREATE DATABASE medilabo_data_store CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-     - CREATE USER 'medilabo'@'%' IDENTIFIED BY 'mot_de_passe_fort';
-     - GRANT ALL PRIVILEGES ON medilabo_data_store.* TO 'medilabo'@'%';
-     - FLUSH PRIVILEGES;
+     ```sql
+     CREATE DATABASE medilabo_data_store CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+     CREATE USER 'medilabo'@'%' IDENTIFIED BY 'mot_de_passe_fort';
+     GRANT ALL PRIVILEGES ON medilabo_data_store.* TO 'medilabo'@'%';
+     FLUSH PRIVILEGES;
+     ```
   3. Note: ms-patient peut créer le schéma au démarrage (ddl-auto create-drop en dev).
 
 - MongoDB
   1. Démarrez MongoDB et assurez‑vous que l’authentification est configurée selon votre besoin.
-  2. (Optionnel) Créez un utilisateur sur la base medilabo_data_store avec le rôle readWrite.
-  3. (Optionnel) Import de données d’exemple avec mongoimport (reprend la logique du dossier docker/mongo-init/) :
-     - mongoimport --host <host> --port <port> --username <user> --password <pass> --authenticationDatabase <authDb> --db medilabo_data_store --collection notes --jsonArray --file docker/mongo-init/data.json
+  2. Création de la base et d’un utilisateur avec mongosh :
+     - Connexion (sans authentification) :
+       ```bash
+       mongosh --host <host> --port <port>
+       ```
+     - Connexion (avec authentification) :
+       ```bash
+       mongosh --host <host> --port <port> -u <admin_user> -p <admin_password> --authenticationDatabase admin
+       ```
+     - Dans le shell mongosh, exécutez :
+       ```mongosh
+       // Selectionne ou créer une table
+       use medilabo_data_store;
+       
+       // Créer la collection
+       db.createCollection("notes");
+       
+       // Créer un utilisateur applicatif avec droits readWrite sur la base
+       db.createUser({
+         user: "medilabo",
+         pwd: "mot_de_passe_fort",
+         roles: [ { role: "readWrite", db: "medilabo_data_store" } ]
+       });
+       ```
+  3. (Optionnel) Import de données d’exemple avec mongoimport (reprend la logique du dossier docker/mongo-init/) :
+     ```bash
+     mongoimport --host <host> --port <port> --username <user> --password <pass> --authenticationDatabase <authDb> --db medilabo_data_store --collection notes --jsonArray --file docker/mongo-init/data.json
+     ```
 
 #### 2.2) Fichiers database.properties à créer
 Créez les fichiers suivants avec ces contenus exacts, puis renseignez les valeurs selon votre environnement.
@@ -241,26 +267,36 @@ Remarques:
 Dans des terminaux séparés, à la racine de chaque microservice:
 
 1. ms-eureka
-   - mvn -q -DskipTests package
-   - java -jar target/*.jar
+   ```bash
+   mvn -q -DskipTests package
+   java -jar target/*.jar
+   ```
    - Vérifiez http://localhost:8761
 
 2. ms-patient (dépend de MySQL)
    - Vérifiez ms-patient/src/main/resources/database.properties
-   - mvn -q -DskipTests spring-boot:run
+   ```bash
+   mvn -q -DskipTests spring-boot:run
+   ```
    - Le service écoute sur http://localhost:8081
 
 3. ms-notes (dépend de MongoDB et de ms-patient/gateway pour certains appels)
    - Vérifiez ms-notes/src/main/resources/database.properties
-   - mvn -q -DskipTests spring-boot:run
+   ```bash
+   mvn -q -DskipTests spring-boot:run
+   ```
    - Le service écoute sur http://localhost:8082
 
 4. ms-risk
-   - mvn -q -DskipTests spring-boot:run
+   ```bash
+   mvn -q -DskipTests spring-boot:run
+   ```
    - Écoute sur http://localhost:8083
 
 5. ms-gateway (dépend d’Eureka et des services)
-   - mvn -q -DskipTests spring-boot:run
+   ```bash
+   mvn -q -DskipTests spring-boot:run
+   ```
    - API Gateway sur http://localhost:8080
 
 Astuce: vous pouvez aussi builder une fois tous les JARs avec mvn -q -DskipTests package à la racine de chaque module puis lancer avec java -jar target/xxx.jar.
