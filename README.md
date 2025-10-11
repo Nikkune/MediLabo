@@ -1,108 +1,108 @@
 # MediLabo — Documentation
 
-Ce dépôt contient une architecture microservices pour l'application MediLabo :
-- ms-eureka (Serveur Eureka)
-- ms-gateway (API Gateway Spring Cloud)
-- ms-patient (service Patients — Spring Boot)
-- ms-notes (service Notes — Spring Boot + MongoDB)
-- ms-risk (service Évaluation du Risque — Spring Boot)
-- ms-front (Frontend React/Vite, servi par Nginx en prod)
-- docker/mongo-init (fichiers d'initialisation MongoDB : data.json et init-mongo.sh)
+This repository contains a microservices architecture for the MediLabo application:
+- ms-eureka (Eureka Server)
+- ms-gateway (Spring Cloud API Gateway)
+- ms-patient (Patients service — Spring Boot)
+- ms-notes (Notes service — Spring Boot + MongoDB)
+- ms-risk (Risk Assessment service — Spring Boot)
+- ms-front (React/Vite frontend, served by Nginx in production)
+- docker/mongo-init (MongoDB initialization files: data.json and init-mongo.sh)
 
-## Sommaire
-- [Aperçu des ports par défaut](#aperçu-des-ports-par-défaut)
-- [Installation avec Docker (recommandé)](#installation-avec-docker-recommandé)
-  - [Lancement en une commande (Docker Compose) (recommandé)](#lancement-en-une-commande-docker-compose-recommandé)
-  - [Lancement sans Compose](#lancement-sans-compose)
-- [Installation manuelle (sans Docker / sans Compose)](#installation-manuelle-sans-docker--sans-compose)
-- [Green Code — pistes de mise en œuvre](#green-code--pistes-de-mise-en-œuvre)
-- [Structure utile du dépôt](#structure-utile-du-dépôt)
-- [Licence](#licence)
+## Table of Contents
+- [Default Ports Overview](#default-ports-overview)
+- [Installation with Docker (recommended)](#installation-with-docker-recommended)
+  - [One-command startup (Docker Compose) (recommended)](#one-command-startup-docker-compose-recommended)
+  - [Startup without Compose](#startup-without-compose)
+- [Manual Installation (without Docker / without Compose)](#manual-installation-without-docker--without-compose)
+- [Green Code — implementation hints](#green-code--implementation-hints)
+- [Useful repository structure](#useful-repository-structure)
+- [Authors](#authors)
 
-## Aperçu des ports par défaut
+## Default Ports Overview
 
-- ms-eureka : 8761 (tableau de bord Eureka)
-- ms-gateway : 8080
-- ms-patient : 8081
-- ms-notes : 8082
-- ms-risk : 8083
-- ms-front (Nginx) : 80
-- MongoDB : 27017
+- ms-eureka: 8761 (Eureka dashboard)
+- ms-gateway: 8080
+- ms-patient: 8081
+- ms-notes: 8082
+- ms-risk: 8083
+- ms-front (Nginx): 80
+- MongoDB: 27017
 
-Ajustez au besoin si vos configurations d'application diffèrent.
+Adjust as needed if your application configuration differs.
 
-## Installation avec Docker (recommandé)
+## Installation with Docker (recommended)
 
-### Lancement en une commande (Docker Compose) (recommandé)
+### One-command startup (Docker Compose) (recommended)
 
-**Important** : Cette section suppose que vous souhaitez tout lancer en conteneurs, **avec** `docker compose`.
- - Si vous voulez tout lancer **sans** Docker Compose, utilisez la section [« Lancement sans Compose »](#lancement-sans-compose).
- - Si vous voulez tout lancer sans Docker, utilisez la section [« Installation manuelle (sans Docker / sans Compose) »](#installation-manuelle-sans-docker--sans-compose).
+Important: This section assumes you want to run everything in containers using docker compose.
+ - If you want to run everything without Docker Compose, use the section “Startup without Compose”.
+ - If you want to run without Docker at all, use the section “Manual Installation (without Docker / without Compose)”.
 
-#### Prérequis logiciels
-- Docker / Docker Desktop récent
+#### Software prerequisites
+- Recent Docker / Docker Desktop
 - Docker Compose
-- PowerShell (Windows) ou un shell équivalent
+- PowerShell (Windows) or an equivalent shell
 
-Pour tout lancer automatiquement dans le bon ordre (bases de données, Eureka, microservices, frontend) et attendre la disponibilité des dépendances critiques, utilisez Docker Compose.
+To start everything automatically in the right order (databases, Eureka, microservices, frontend) and wait for critical dependencies to be available, use Docker Compose.
 
-Commandes (à la racine du projet) :
+Commands (from the project root):
 
-Pour construire et lancer l'application :
+To build and start the application:
 ```powershell
 docker compose up -d --build
 ```
 
-Pour suivre les logs si besion :
+To follow logs if needed:
 ```powershell
 docker compose logs -f --tail=100
 ```
 
-Pour arrêter et supprimer les conteneurs de l'application :
+To stop and remove the application containers:
 ```powershell
 docker compose down
 ```
 
-Notes :
-- Le service MongoDB inclut un healthcheck et un seed automatique via docker/mongo-init (data.json + init-mongo.sh).
-- MySQL est inclus pour ms-patient avec un healthcheck; les variables SPRING_DATASOURCE_* surchargent la configuration packagée.
-- Les services Spring démarrent même si Eureka n’est pas encore prêt; ils se (ré)enregistreront automatiquement.
-- Les ports exposés par défaut : 80 (front), 8080 (gateway), 8761 (Eureka), 8081/8082/8083 (services), 27017 (Mongo), 3306 (MySQL).
+Notes:
+- The MongoDB service includes a healthcheck and automatic seeding via docker/mongo-init (data.json + init-mongo.sh).
+- MySQL is included for ms-patient with a healthcheck; SPRING_DATASOURCE_* environment variables override packaged config.
+- Spring services start even if Eureka is not yet ready; they will (re)register automatically.
+- Default exposed ports: 80 (front), 8080 (gateway), 8761 (Eureka), 8081/8082/8083 (services), 27017 (Mongo), 3306 (MySQL).
 
-Les Dockerfiles sont déjà fournis pour chaque microservice. Un répertoire d'init MongoDB est disponible dans `docker/mongo-init/` contenant :
-- `data.json` : données de seed pour la collection
-- `init-mongo.sh` : script d'import automatique (utilise `mongoimport`)
+Dockerfiles are already provided for each microservice. A MongoDB init directory is available in `docker/mongo-init/` containing:
+- `data.json`: seed data for the collection
+- `init-mongo.sh`: automatic import script (uses `mongoimport`)
 
-Le script s'exécute automatiquement si vous montez le dossier sur `/docker-entrypoint-initdb.d` du conteneur MongoDB.
+The script runs automatically if you mount the folder to `/docker-entrypoint-initdb.d` of the MongoDB container.
 
 ---
 
-### Lancement sans Compose
-**Important** : Cette section suppose que vous souhaitez tout lancer en conteneurs, **sans** `docker compose`.
- - Si vous voulez tout lancer **avec** Docker Compose, utilisez la section [« Lancement en une commande (Docker Compose) (recommandé) »](#lancement-en-une-commande-docker-compose-recommandé).
- - Si vous voulez tout lancer sans Docker, utilisez la section [« Installation manuelle (sans Docker / sans Compose) »](#installation-manuelle-sans-docker--sans-compose).
+### Startup without Compose
+Important: This section assumes you want to run everything in containers without docker compose.
+ - If you want to run everything with Docker Compose, use the section “One-command startup (Docker Compose) (recommended)”.
+ - If you want to run without Docker, use the section “Manual Installation (without Docker / without Compose)”.
 
-#### 1) Prérequis logiciels
-- Docker Engine / Docker Desktop récent
-- PowerShell (Windows) ou un shell équivalent
+#### 1) Software prerequisites
+- Docker Engine / Docker Desktop (recent)
+- PowerShell (Windows) or an equivalent shell
 
-#### 2) Réseau et volumes Docker
-Exécutez ces commandes une seule fois (elles sont idempotentes) :
+#### 2) Docker network and volumes
+Run these commands once (they are idempotent):
 
 ```powershell
-# Réseau dédié (pour que les conteneurs se résolvent par leurs noms)
+# Dedicated network (so containers can resolve each other by name)
 if (-not (docker network ls --format '{{.Name}}' | Select-String -SimpleMatch 'medilabo-net')) { docker network create medilabo-net }
 
-# Volumes de données persistantes
+# Persistent data volumes
 if (-not (docker volume ls --format '{{.Name}}' | Select-String -SimpleMatch 'mongo-data')) { docker volume create mongo-data }
 if (-not (docker volume ls --format '{{.Name}}' | Select-String -SimpleMatch 'mysql-data')) { docker volume create mysql-data }
 ```
 
-#### 3) Build des images
-Depuis la racine du dépôt :
+#### 3) Build images
+From the repository root:
 
 ```powershell
-# Backend Spring Boot
+# Backend (Spring Boot)
 docker build -t medilabo/ms-eureka:local   ./ms-eureka
 docker build -t medilabo/ms-gateway:local  ./ms-gateway
 docker build -t medilabo/ms-patient:local  ./ms-patient
@@ -113,150 +113,150 @@ docker build -t medilabo/ms-risk:local     ./ms-risk
 docker build -t medilabo/ms-front:local    ./ms-front
 ```
 
-#### 4) Lancement des bases de données
-Lancez d’abord MongoDB et MySQL pour que les microservices puissent s’y connecter.
+#### 4) Start the databases
+Start MongoDB and MySQL first so microservices can connect to them.
 
 ```powershell
-# MongoDB (avec seed automatique depuis docker/mongo-init)
+# MongoDB (with automatic seeding from docker/mongo-init)
 docker run -d --name mongo --network medilabo-net -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=example -e MONGO_DB_NAME=notesdb -e MONGO_COLLECTION=notes -v "${PWD}.Path\docker\mongo-init:/docker-entrypoint-initdb.d:ro" -v mongo-data:/data/db mongo:7
 
 # MySQL
 docker run -d --name mysql --network medilabo-net -p 3306:3306 -e MYSQL_DATABASE=medilabo_data_store -e MYSQL_USER=medilabo -e MYSQL_PASSWORD=medilabo -e MYSQL_ROOT_PASSWORD=example -v mysql-data:/var/lib/mysql mysql:8.4
 ```
 
-Astuce: patientez quelques secondes pour laisser MySQL/MongoDB démarrer complètement. Vous pouvez vérifier les logs :
+Tip: wait a few seconds to let MySQL/MongoDB fully start. You can check logs:
 
 ```powershell
 docker logs -f --tail=100 mysql
-# ou
+# or
 docker logs -f --tail=100 mongo
 ```
 
-#### 5) Lancement des microservices
-Dans l’ordre recommandé :
+#### 5) Start the microservices
+In the recommended order:
 
 ```powershell
 # 1) Eureka
 docker run -d --name ms-eureka --network medilabo-net -p 8761:8761 medilabo/ms-eureka:local
 
-# 2) Gateway (après Eureka)
+# 2) Gateway (after Eureka)
 docker run -d --name ms-gateway --network medilabo-net -p 8080:8080 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER medilabo/ms-gateway:local
 
-# 3) Patient (après MySQL + Eureka)
+# 3) Patient (after MySQL + Eureka)
 docker run -d --name ms-patient --network medilabo-net -p 8081:8081 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/medilabo_data_store -e SPRING_DATASOURCE_USERNAME=medilabo -e SPRING_DATASOURCE_PASSWORD=medilabo -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER medilabo/ms-patient:local
 
-# 4) Notes (après MongoDB + Eureka)
+# 4) Notes (after MongoDB + Eureka)
 docker run -d --name ms-notes --network medilabo-net -p 8082:8082 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_DATA_MONGODB_HOST=mongo -e SPRING_DATA_MONGODB_PORT=27017 -e SPRING_DATA_MONGODB_DATABASE=notesdb -e SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin -e SPRING_DATA_MONGODB_USERNAME=root -e SPRING_DATA_MONGODB_PASSWORD=example -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER -e MS_PATIENT_BASEURL=http://ms-gateway:8080/patient -e MS_PATIENT_USERNAME=medilabo -e MS_PATIENT_PASSWORD=medilabo123 medilabo/ms-notes:local
 
-# 5) Risk (après Gateway)
+# 5) Risk (after Gateway)
 docker run -d --name ms-risk --network medilabo-net -p 8083:8083 -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ms-eureka:8761/eureka -e SPRING_SECURITY_USER_NAME=medilabo -e SPRING_SECURITY_USER_PASSWORD=medilabo123 -e SPRING_SECURITY_USER_ROLES=USER -e MS_PATIENT_BASEURL=http://ms-gateway:8080/patient -e MS_PATIENT_USERNAME=medilabo -e MS_PATIENT_PASSWORD=medilabo123 -e MS_NOTES_BASEURL=http://ms-gateway:8080/notes -e MS_NOTES_USERNAME=medilabo -e MS_NOTES_PASSWORD=medilabo123 medilabo/ms-risk:local
 ```
 
-#### 6) Lancement du frontend (Nginx)
-Après que la gateway soit en ligne :
+#### 6) Start the frontend (Nginx)
+After the gateway is online:
 
 ```powershell
 docker run -d --name ms-front --network medilabo-net -p 80:80 medilabo/ms-front:local
 ```
 
-#### 7) Vérification
-- Eureka : http://localhost:8761 doit afficher les services.
-- API Gateway : http://localhost:8080/patient et http://localhost:8080/notes
-- Frontend : http://localhost/ (selon votre config Nginx et routes)
-- Logs : `docker logs -f <container>` pour diagnostiquer un service.
+#### 7) Verification
+- Eureka: http://localhost:8761 should list the services.
+- API Gateway: http://localhost:8080/patient and http://localhost:8080/notes
+- Frontend: http://localhost/ (depending on your Nginx config and routes)
+- Logs: `docker logs -f <container>` to diagnose a service.
 
 #### 8) Clean-up
-Arrêtez et supprimez tous les conteneurs, conservez les volumes (ou pas) :
+Stop and remove all containers; keep volumes (or not):
 
 ```powershell
-# Arrêt
+# Stop
 docker stop ms-front ms-risk ms-notes ms-patient ms-gateway ms-eureka mysql mongo
 
-# Suppression
+# Remove
 docker rm   ms-front ms-risk ms-notes ms-patient ms-gateway ms-eureka mysql mongo
 
-# (Optionnel) supprimer les volumes de données
+# (Optional) remove data volumes
 docker volume rm mongo-data mysql-data
 
-# (Optionnel) supprimer le réseau dédié
+# (Optional) remove the dedicated network
 docker network rm medilabo-net
 ```
 
-## Installation manuelle (sans Docker / sans Compose)
+## Manual Installation (without Docker / without Compose)
 
-Ce mode est utile pour le développement local, le débogage fin ou lorsque Docker n’est pas disponible. Les étapes ci‑dessous reprennent la logique du docker-compose (mêmes ports, même nom de base de données) afin de rester cohérent.
+This mode is useful for local development, fine-grained debugging, or when Docker is not available. The steps below mirror docker-compose logic (same ports, same database name) to stay consistent.
 
-**Important** : Cette section suppose que vous souhaitez tout lancer **sans** `docker`.
-- Si vous voulez tout lancer **avec** Docker Compose, utilisez la section [« Lancement en une commande (Docker Compose) (recommandé) »](#lancement-en-une-commande-docker-compose-recommandé).
-- Si vous voulez tout lancer **sans** Docker Compose, utilisez la section [« Lancement sans Compose »](#lancement-sans-compose).
+Important: This section assumes you want to run everything without docker.
+- If you want to run everything with Docker Compose, use the section “One-command startup (Docker Compose) (recommended)”.
+- If you want to run everything without Docker Compose, use the section “Startup without Compose”.
 
-**Important** : vous devez créer des fichiers database.properties pour ms-notes et ms-patient [(voir étape 2.2)](#22-fichiers-databaseproperties-à-créer).
+Important: you must create database.properties files for ms-notes and ms-patient (see step 2.2).
 
-### 1) Prérequis logiciels
+### 1) Software prerequisites
 - Java 21 + Maven 3.9+
 - Node.js 22.x + npm
-- MongoDB 6.x+ installé localement OU un accès à une instance distante
-- MySQL 8.x installé localement OU un accès à une instance distante
-- Accès réseau aux ports locaux suivants par défaut: 8761, 8080, 8081, 8082, 8083
+- MongoDB 6.x+ installed locally OR access to a remote instance
+- MySQL 8.x installed locally OR access to a remote instance
+- Network access to the following local ports by default: 8761, 8080, 8081, 8082, 8083
 
-### 2) Installations et configuration des bases de données
+### 2) Database setup and configuration
 
-#### 2.1) Création et initialisation
+#### 2.1) Creation and initialization
 - MySQL
-  1. Démarrez MySQL et connectez‑vous comme administrateur.
-  2. Créez une base et (optionnellement) un utilisateur dédié:
+  1. Start MySQL and connect as administrator.
+  2. Create a database and (optionally) a dedicated user:
      ```sql
      CREATE DATABASE medilabo_data_store CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-     CREATE USER 'medilabo'@'%' IDENTIFIED BY 'mot_de_passe_fort';
+     CREATE USER 'medilabo'@'%' IDENTIFIED BY 'strong_password';
      GRANT ALL PRIVILEGES ON medilabo_data_store.* TO 'medilabo'@'%';
      FLUSH PRIVILEGES;
      ```
-  3. Note: ms-patient peut créer le schéma au démarrage (ddl-auto create-drop en dev).
+  3. Note: ms-patient can create the schema at startup (ddl-auto create-drop in dev).
 
 - MongoDB
-  1. Démarrez MongoDB et assurez‑vous que l’authentification est configurée selon votre besoin.
-  2. Création de la base et d’un utilisateur avec mongosh :
-     - Connexion (sans authentification) :
+  1. Start MongoDB and ensure authentication is configured as needed.
+  2. Create the database and a user with mongosh:
+     - Connect (without authentication):
        ```bash
        mongosh --host <host> --port <port>
        ```
-     - Connexion (avec authentification) :
+     - Connect (with authentication):
        ```bash
        mongosh --host <host> --port <port> -u <admin_user> -p <admin_password> --authenticationDatabase admin
        ```
-     - Dans le shell mongosh, exécutez :
+     - In the mongosh shell, run:
        ```mongosh
-       // Selectionne ou créer une table
+       // Select or create the database
        use medilabo_data_store;
        
-       // Créer la collection
+       // Create the collection
        db.createCollection("notes");
        
-       // Créer un utilisateur applicatif avec droits readWrite sur la base
+       // Create an application user with readWrite on the DB
        db.createUser({
          user: "medilabo",
-         pwd: "mot_de_passe_fort",
+         pwd: "strong_password",
          roles: [ { role: "readWrite", db: "medilabo_data_store" } ]
        });
        ```
-  3. (Optionnel) Import de données d’exemple avec mongoimport (reprend la logique du dossier docker/mongo-init/) :
+  3. (Optional) Import sample data with mongoimport (mirrors docker/mongo-init/ logic):
      ```bash
      mongoimport --host <host> --port <port> --username <user> --password <pass> --authenticationDatabase <authDb> --db medilabo_data_store --collection notes --jsonArray --file docker/mongo-init/data.json
      ```
 
-#### 2.2) Fichiers database.properties à créer
-Créez les fichiers suivants avec ces contenus exacts, puis renseignez les valeurs selon votre environnement.
+#### 2.2) database.properties files to create
+Create the following files with these exact keys, then fill values for your environment.
 
 - ms-notes/src/main/resources/database.properties
 
-  Contenu:
+  Content:
     ```properties
     # MongoDB host/port
     spring.data.mongodb.host=
     spring.data.mongodb.port=
-    # Base de données principale
+    # Main database
     spring.data.mongodb.database=
-    # Authentification
+    # Authentication
     spring.data.mongodb.username=
     spring.data.mongodb.password=
     spring.data.mongodb.authentication-database=
@@ -264,7 +264,7 @@ Créez les fichiers suivants avec ces contenus exacts, puis renseignez les valeu
 
 - ms-patient/src/main/resources/database.properties
 
-  Contenu:
+  Content:
     ```properties
     spring.datasource.url=jdbc:mysql://host:port/database
     spring.datasource.username=
@@ -274,88 +274,88 @@ Créez les fichiers suivants avec ces contenus exacts, puis renseignez les valeu
     spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
     ```
 
-Remarques:
-- Ces fichiers sont importés par Spring via spring.config.import défini dans application.properties de chaque service.
-- Ne versionnez pas des mots de passe réels. Utilisez des variables d’environnement/secrets si nécessaire.
+Notes:
+- These files are imported by Spring via spring.config.import defined in each service’s application.properties.
+- Do not commit real passwords. Use environment variables/secrets if needed.
 
-### 3) Lancement des services (ordre recommandé)
-Dans des terminaux séparés, à la racine de chaque microservice:
+### 3) Start the services (recommended order)
+In separate terminals, at each microservice root:
 
 1. ms-eureka
    ```bash
    mvn -q -DskipTests package
    java -jar target/*.jar
    ```
-   - Vérifiez http://localhost:8761
+   - Check http://localhost:8761
 
-2. ms-patient (dépend de MySQL)
-   - Vérifiez ms-patient/src/main/resources/database.properties
+2. ms-patient (depends on MySQL)
+   - Check ms-patient/src/main/resources/database.properties
    ```bash
    mvn -q -DskipTests spring-boot:run
    ```
-   - Le service écoute sur http://localhost:8081
+   - Service listens on http://localhost:8081
 
-3. ms-notes (dépend de MongoDB et de ms-patient/gateway pour certains appels)
-   - Vérifiez ms-notes/src/main/resources/database.properties
+3. ms-notes (depends on MongoDB and on ms-patient/gateway for some calls)
+   - Check ms-notes/src/main/resources/database.properties
    ```bash
    mvn -q -DskipTests spring-boot:run
    ```
-   - Le service écoute sur http://localhost:8082
+   - Service listens on http://localhost:8082
 
 4. ms-risk
    ```bash
    mvn -q -DskipTests spring-boot:run
    ```
-   - Écoute sur http://localhost:8083
+   - Listens on http://localhost:8083
 
-5. ms-gateway (dépend d’Eureka et des services)
+5. ms-gateway (depends on Eureka and services)
    ```bash
    mvn -q -DskipTests spring-boot:run
    ```
-   - API Gateway sur http://localhost:8080
+   - API Gateway on http://localhost:8080
 
-Astuce: vous pouvez aussi builder une fois tous les JARs avec mvn -q -DskipTests package à la racine de chaque module puis lancer avec java -jar target/xxx.jar.
+Tip: you can also build all JARs once with mvn -q -DskipTests package at each module root then run with java -jar target/xxx.jar.
 
-### 4) Lancement du frontend
-- Aller dans ms-front
+### 4) Start the frontend
+- Go to ms-front
 - npm install
 - npm run dev
-- Ouvrir l’URL de développement affichée (souvent http://localhost:5173). La configuration de proxy Vite doit pointer vers la gateway (http://localhost:8080) si utilisée.
+- Open the displayed dev URL (often http://localhost:5173). Vite proxy config should point to the gateway (http://localhost:8080) if used.
 
-### 5) Vérification
-- Eureka: http://localhost:8761 liste les services enregistrés.
-- API Gateway: http://localhost:8080/patient et /notes doivent répondre (selon vos routes configurées).
-- Logs: surveillez les terminaux pour d’éventuelles erreurs de connexion à MySQL/MongoDB.
+### 5) Verification
+- Eureka: http://localhost:8761 lists registered services.
+- API Gateway: http://localhost:8080/patient and /notes should respond (depending on your configured routes).
+- Logs: watch terminals for potential MySQL/MongoDB connection errors.
 
 ### 6) Clean‑up
-- Arrêtez les processus (Ctrl+C) dans chaque terminal.
-- Facultatif: supprimez/arrêtez vos services MySQL/MongoDB locaux si lancés pour les tests.
+- Stop the processes (Ctrl+C) in each terminal.
+- Optional: remove/stop your local MySQL/MongoDB services if started for tests.
 
-## Green Code — pistes de mise en œuvre
+## Green Code — implementation hints
 
-Objectif: aller à l’essentiel pour réduire CPU/RAM/IO et trafic, sans complexifier le projet. Appliquez en priorité ces quelques actions simples:
+Goal: focus on the essentials to reduce CPU/RAM/IO and network traffic without complicating the project. Prioritize these few simple actions:
 
-- Docker: images minces (JRE/distroless) et builds multi‑étapes; nettoyez les caches de build.
-- JVM/Spring: limitez la mémoire (MaxRAMPercentage), logs en INFO, compression HTTP activée sur la Gateway.
-- Base de données: index sur les champs de recherche clés; charger uniquement ce qui est nécessaire (projections/DTO).
-- API: toujours paginer les listes et limiter la taille des réponses par défaut.
-- Frontend: build de prod, assets minifiés et compressés, cache long pour les fichiers versionnés.
-- Nginx: gzip activé; logs d’accès désactivés en prod si non utiles.
-- CI/CD: cache Maven/npm; utilisez Docker BuildKit.
-- Opérations: arrêtez les conteneurs non utilisés; surveillez erreurs 5xx et pics CPU.
+- Docker: slim images (JRE/distroless) and multi-stage builds; clean build caches.
+- JVM/Spring: limit memory (MaxRAMPercentage), logs at INFO, enable HTTP compression on the Gateway.
+- Database: indexes on key search fields; load only what’s needed (projections/DTO).
+- API: always paginate lists and limit default response size.
+- Frontend: production build, minified and compressed assets, long cache for versioned files.
+- Nginx: enable gzip; disable access logs in prod if not useful.
+- CI/CD: Maven/npm cache; use Docker BuildKit.
+- Operations: stop unused containers; monitor 5xx errors and CPU spikes.
 
-Checklist rapide
-- [ ] Logs en INFO, compression HTTP active
-- [ ] Pagination en place sur les listes
-- [ ] Index DB clés présents
-- [ ] Front en build prod + cache/Compression
-- [ ] Images Docker minces
+Quick checklist
+- [ ] Logs at INFO, HTTP compression enabled
+- [ ] Pagination in place on lists
+- [ ] Key DB indexes present
+- [ ] Front built for prod + cache/compression
+- [ ] Slim Docker images
 
-## Structure utile du dépôt
+## Useful repository structure
 
-- `ms-*/Dockerfile` : images des microservices
-- `ms-front/nginx.conf` : config Nginx du frontend
-- `docker/mongo-init/` : seed MongoDB (`data.json`) et script `init-mongo.sh`
+- `ms-*/Dockerfile`: microservice images
+- `ms-front/nginx.conf`: frontend Nginx config
+- `docker/mongo-init/`: MongoDB seed (`data.json`) and `init-mongo.sh` script
 
 ## Authors
 
