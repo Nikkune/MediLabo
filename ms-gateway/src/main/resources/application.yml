@@ -13,6 +13,7 @@ spring:
               '[/**]':
                 allowed-origins:
                   - http://localhost:5173
+                  - http://localhost
                 allowed-methods:
                   - GET
                   - POST

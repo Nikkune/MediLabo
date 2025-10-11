@@ -9,7 +9,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-      # Used by init script to pick DB/collection
+      # Used by an init script to pick DB/collection
       MONGO_DB_NAME: notesdb
       MONGO_COLLECTION: notes
     volumes:
@@ -85,10 +85,18 @@ services:
       - "8082:8082"
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://ms-eureka:8761/eureka
-      SPRING_DATA_MONGODB_URI: mongodb://root:example@mongo:27017/notesdb?authSource=admin
+      SPRING_DATA_MONGODB_HOST: mongo
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: notesdb
+      SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE: admin
+      SPRING_DATA_MONGODB_USERNAME: root
+      SPRING_DATA_MONGODB_PASSWORD: example
       SPRING_SECURITY_USER_NAME: ${SEC_USER:-medilabo}
       SPRING_SECURITY_USER_PASSWORD: ${SEC_PASSWORD:-medilabo123}
       SPRING_SECURITY_USER_ROLES: ${SEC_ROLES:-USER}
+      MS_PATIENT_BASEURL: http://ms-gateway:8080/patient
+      MS_PATIENT_USERNAME: ${MS_PATIENT_USERNAME:-medilabo}
+      MS_PATIENT_PASSWORD: ${MS_PATIENT_PASSWORD:-medilabo123}
     depends_on:
       mongo:
         condition: service_healthy
@@ -102,6 +110,15 @@ services:
       - "8083:8083"
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://ms-eureka:8761/eureka
+      SPRING_SECURITY_USER_NAME: ${SEC_USER:-medilabo}
+      SPRING_SECURITY_USER_PASSWORD: ${SEC_PASSWORD:-medilabo123}
+      SPRING_SECURITY_USER_ROLES: ${SEC_ROLES:-USER}
+      MS_PATIENT_BASEURL: http://ms-gateway:8080/patient
+      MS_PATIENT_USERNAME: ${MS_PATIENT_USERNAME:-medilabo}
+      MS_PATIENT_PASSWORD: ${MS_PATIENT_PASSWORD:-medilabo123}
+      MS_NOTES_BASEURL: http://ms-gateway:8080/notes
+      MS_NOTES_USERNAME: ${MS_NOTES_USERNAME:-medilabo}
+      MS_NOTES_PASSWORD: ${MS_NOTES_PASSWORD:-medilabo123}
     depends_on:
       ms-eureka:
         condition: service_started
