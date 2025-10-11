@@ -5,32 +5,18 @@ import {type ApiError, del, get, post, put} from "../lib/apiCall.ts";
 import {Add, Close, Delete, Edit, Note, Save} from "@mui/icons-material";
 import {toast} from "react-toastify";
 import type {Patient} from "../data/Patient.ts";
-import {DataGrid, GridActionsCellItem, GridRowEditStopReasons, type GridRowId, GridRowModes, type GridRowModesModel, type GridRowParams, Toolbar, ToolbarButton} from "@mui/x-data-grid";
+import {DataGrid, GridActionsCellItem, GridRowEditStopReasons, type GridRowId, GridRowModes, type GridRowModesModel, type GridRowParams, type GridToolbarProps, Toolbar, ToolbarButton} from "@mui/x-data-grid";
 
 type PatientDTO = Omit<Patient, 'birthDate' | 'address' | 'phoneNumber'> & { birthDate: string | null; address: string | null; phoneNumber: string | null };
 type PatientRow = Omit<Patient, 'birthDate'> & { id: GridRowId; isNew?: boolean; birthDate: Date | null };
+type EditToolbarProps = {
+    setPatients: React.Dispatch<React.SetStateAction<PatientRow[]>>;
+    setRowModesModel: React.Dispatch<React.SetStateAction<GridRowModesModel>>;
+};
 
 function isApiError(value: unknown): value is ApiError {
     return typeof value === 'object' && value !== null && 'success' in value && (value as { success?: unknown }).success === false;
 }
-
-const EditToolbar = ({setPatients, setRowModesModel}: { setPatients: React.Dispatch<React.SetStateAction<PatientRow[]>>; setRowModesModel: React.Dispatch<React.SetStateAction<GridRowModesModel>>; }) => {
-    const handleClick = () => {
-        const id = `new-${Date.now()}`;
-        setPatients((oldRows) => [
-            {id, lastName: '', firstName: '', birthDate: null, gender: 'M', address: '', phoneNumber: '', isNew: true},
-            ...oldRows,
-        ]);
-        setRowModesModel((oldModel) => ({...oldModel, [id]: {mode: GridRowModes.Edit, fieldToFocus: 'lastName'}}));
-    };
-    return (
-        <Toolbar>
-            <ToolbarButton onClick={handleClick}>
-                <Add/>
-            </ToolbarButton>
-        </Toolbar>
-    );
-};
 
 export default function Patients() {
     const [deleteOpen, setDeleteOpen] = useState(false);
@@ -39,6 +25,24 @@ export default function Patients() {
     const [isLoading, setIsLoading] = useState(true);
     const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
     const navigate = useNavigate();
+
+    const ToolbarWithAdd: React.FC<GridToolbarProps> = () => {
+        const handleClick = () => {
+            const id = `new-${Date.now()}`;
+            setPatients((oldRows) => [
+                {id, lastName: '', firstName: '', birthDate: null, gender: 'M', address: '', phoneNumber: '', isNew: true},
+                ...oldRows,
+            ]);
+            setRowModesModel((oldModel) => ({...oldModel, [id]: {mode: GridRowModes.Edit, fieldToFocus: 'lastName'}}));
+        };
+        return (
+            <Toolbar>
+                <ToolbarButton onClick={handleClick}>
+                    <Add/>
+                </ToolbarButton>
+            </Toolbar>
+        );
+    };
 
     async function fetchPatients() {
         setIsLoading(true);
@@ -106,7 +110,7 @@ export default function Patients() {
     };
 
     const processRowUpdate = async (newRow: PatientRow, oldRow: PatientRow): Promise<PatientRow> => {
-        const payload = {
+        const payload: Partial<PatientDTO> = {
             firstName: newRow.firstName,
             lastName: newRow.lastName,
             birthDate: newRow.birthDate ? newRow.birthDate.toISOString() : null,
@@ -202,8 +206,13 @@ export default function Patients() {
                 processRowUpdate={processRowUpdate}
                 rows={patients}
                 loading={isLoading}
-                slots={{toolbar: EditToolbar}}
-                slotProps={{toolbar: {setPatients, setRowModesModel}}}
+                slots={{toolbar: ToolbarWithAdd}}
+                slotProps={{
+                    toolbar: {
+                        setPatients,
+                        setRowModesModel
+                    } as EditToolbarProps
+                }}
                 showToolbar
             />
             {/* Delete Confirm Dialog */}
