@@ -1,0 +1,137 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      # Used by an init script to pick DB/collection
+      MONGO_DB_NAME: notesdb
+      MONGO_COLLECTION: notes
+    volumes:
+      - ./docker/mongo-init:/docker-entrypoint-initdb.d:ro
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: medilabo_data_store
+      MYSQL_USER: medilabo
+      MYSQL_PASSWORD: medilabo
+      MYSQL_ROOT_PASSWORD: example
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pexample"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  ms-eureka:
+    build: ./ms-eureka
+    container_name: ms-eureka
+    ports:
+      - "8761:8761"
+
+  ms-gateway:
+    build: ./ms-gateway
+    container_name: ms-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://ms-eureka:8761/eureka
+      SPRING_SECURITY_USER_NAME: ${SEC_USER:-medilabo}
+      SPRING_SECURITY_USER_PASSWORD: ${SEC_PASSWORD:-medilabo123}
+      SPRING_SECURITY_USER_ROLES: ${SEC_ROLES:-USER}
+    depends_on:
+      - ms-eureka
+
+  ms-patient:
+    build: ./ms-patient
+    container_name: ms-patient
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://ms-eureka:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/medilabo_data_store
+      SPRING_DATASOURCE_USERNAME: medilabo
+      SPRING_DATASOURCE_PASSWORD: medilabo
+      SPRING_SECURITY_USER_NAME: ${SEC_USER:-medilabo}
+      SPRING_SECURITY_USER_PASSWORD: ${SEC_PASSWORD:-medilabo123}
+      SPRING_SECURITY_USER_ROLES: ${SEC_ROLES:-USER}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ms-eureka:
+        condition: service_started
+
+  ms-notes:
+    build: ./ms-notes
+    container_name: ms-notes
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://ms-eureka:8761/eureka
+      SPRING_DATA_MONGODB_HOST: mongo
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: notesdb
+      SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE: admin
+      SPRING_DATA_MONGODB_USERNAME: root
+      SPRING_DATA_MONGODB_PASSWORD: example
+      SPRING_SECURITY_USER_NAME: ${SEC_USER:-medilabo}
+      SPRING_SECURITY_USER_PASSWORD: ${SEC_PASSWORD:-medilabo123}
+      SPRING_SECURITY_USER_ROLES: ${SEC_ROLES:-USER}
+      MS_PATIENT_BASEURL: http://ms-gateway:8080/patient
+      MS_PATIENT_USERNAME: ${MS_PATIENT_USERNAME:-medilabo}
+      MS_PATIENT_PASSWORD: ${MS_PATIENT_PASSWORD:-medilabo123}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ms-eureka:
+        condition: service_started
+
+  ms-risk:
+    build: ./ms-risk
+    container_name: ms-risk
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://ms-eureka:8761/eureka
+      SPRING_SECURITY_USER_NAME: ${SEC_USER:-medilabo}
+      SPRING_SECURITY_USER_PASSWORD: ${SEC_PASSWORD:-medilabo123}
+      SPRING_SECURITY_USER_ROLES: ${SEC_ROLES:-USER}
+      MS_PATIENT_BASEURL: http://ms-gateway:8080/patient
+      MS_PATIENT_USERNAME: ${MS_PATIENT_USERNAME:-medilabo}
+      MS_PATIENT_PASSWORD: ${MS_PATIENT_PASSWORD:-medilabo123}
+      MS_NOTES_BASEURL: http://ms-gateway:8080/notes
+      MS_NOTES_USERNAME: ${MS_NOTES_USERNAME:-medilabo}
+      MS_NOTES_PASSWORD: ${MS_NOTES_PASSWORD:-medilabo123}
+    depends_on:
+      ms-eureka:
+        condition: service_started
+
+  ms-front:
+    build: ./ms-front
+    container_name: ms-front
+    ports:
+      - "80:80"
+    depends_on:
+      ms-gateway:
+        condition: service_started
+
+volumes:
+  mongo-data: {}
+  mysql-data: {}
